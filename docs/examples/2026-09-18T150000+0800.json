@@ -1,0 +1,329 @@
+{
+  "schema_version": "1.0",
+  "input": {
+    "year": 2026,
+    "month": 9,
+    "day": 18,
+    "hour": 15,
+    "minute": 0,
+    "second": 0,
+    "utc_offset_minutes": 480,
+    "day_boundary": "zi_start"
+  },
+  "calendar": {
+    "four_pillars": {
+      "year": {
+        "index": 42,
+        "stem": "bing",
+        "branch": "wu"
+      },
+      "month": {
+        "index": 33,
+        "stem": "ding",
+        "branch": "you"
+      },
+      "day": {
+        "index": 31,
+        "stem": "yi",
+        "branch": "wei"
+      },
+      "hour": {
+        "index": 20,
+        "stem": "jia",
+        "branch": "shen"
+      }
+    },
+    "solar_term": {
+      "index": 17,
+      "name": "白露",
+      "start": {
+        "year": 2026,
+        "month": 9,
+        "day": 7,
+        "hour": 22,
+        "minute": 41,
+        "second": 16,
+        "utc_offset_minutes": 480
+      }
+    },
+    "next_solar_term": {
+      "index": 18,
+      "name": "秋分",
+      "start": {
+        "year": 2026,
+        "month": 9,
+        "day": 23,
+        "hour": 8,
+        "minute": 5,
+        "second": 14,
+        "utc_offset_minutes": 480
+      }
+    },
+    "lunar_date": {
+      "year": 2026,
+      "month": 8,
+      "day": 8,
+      "is_leap_month": false,
+      "name": "农历丙午年八月初八"
+    }
+  },
+  "method": "shi_jia_chai_bu_zhuan_pan",
+  "conventions": {
+    "center_palace": "always_kun",
+    "tian_qin": "follows_tian_rui",
+    "void_basis": "hour",
+    "horse_basis": "hour"
+  },
+  "dun": "yin",
+  "yuan": "upper",
+  "ju": 9,
+  "yuan_head": {
+    "index": 30,
+    "stem": "jia",
+    "branch": "wu"
+  },
+  "xun": {
+    "head": {
+      "index": 20,
+      "stem": "jia",
+      "branch": "shen"
+    },
+    "hidden_stem": "geng",
+    "void_branches": [
+      "wu",
+      "wei"
+    ]
+  },
+  "leaders": {
+    "star": "tian_zhu",
+    "door": "jing",
+    "original_palace": 7,
+    "star_palace": 7,
+    "door_palace": 7,
+    "door_raw_palace": 7
+  },
+  "horse": {
+    "branch": "yin",
+    "palace": 8
+  },
+  "pillar_voids": {
+    "year": [
+      "yin",
+      "mao"
+    ],
+    "month": [
+      "chen",
+      "si"
+    ],
+    "day": [
+      "chen",
+      "si"
+    ],
+    "hour": [
+      "wu",
+      "wei"
+    ]
+  },
+  "palaces": [
+    {
+      "number": 1,
+      "direction": "north",
+      "trigram": "kan",
+      "element": "water",
+      "earth_stem": "yi",
+      "hosted_earth_stem": null,
+      "heaven_stems": [
+        {
+          "stem": "yi",
+          "source_palace": 1,
+          "is_center_hosted": false
+        }
+      ],
+      "stars": [
+        "tian_peng"
+      ],
+      "door": "xiu",
+      "deity": "jiu_di",
+      "void_branches": [],
+      "is_horse": false
+    },
+    {
+      "number": 2,
+      "direction": "southwest",
+      "trigram": "kun",
+      "element": "earth",
+      "earth_stem": "bing",
+      "hosted_earth_stem": "ren",
+      "heaven_stems": [
+        {
+          "stem": "bing",
+          "source_palace": 2,
+          "is_center_hosted": false
+        },
+        {
+          "stem": "ren",
+          "source_palace": 5,
+          "is_center_hosted": true
+        }
+      ],
+      "stars": [
+        "tian_rui",
+        "tian_qin"
+      ],
+      "door": "si",
+      "deity": "teng_she",
+      "void_branches": [
+        "wei"
+      ],
+      "is_horse": false
+    },
+    {
+      "number": 3,
+      "direction": "east",
+      "trigram": "zhen",
+      "element": "wood",
+      "earth_stem": "ding",
+      "hosted_earth_stem": null,
+      "heaven_stems": [
+        {
+          "stem": "ding",
+          "source_palace": 3,
+          "is_center_hosted": false
+        }
+      ],
+      "stars": [
+        "tian_chong"
+      ],
+      "door": "shang",
+      "deity": "bai_hu",
+      "void_branches": [],
+      "is_horse": false
+    },
+    {
+      "number": 4,
+      "direction": "southeast",
+      "trigram": "xun",
+      "element": "wood",
+      "earth_stem": "gui",
+      "hosted_earth_stem": null,
+      "heaven_stems": [
+        {
+          "stem": "gui",
+          "source_palace": 4,
+          "is_center_hosted": false
+        }
+      ],
+      "stars": [
+        "tian_fu"
+      ],
+      "door": "du",
+      "deity": "liu_he",
+      "void_branches": [],
+      "is_horse": false
+    },
+    {
+      "number": 5,
+      "direction": "center",
+      "trigram": null,
+      "element": "earth",
+      "earth_stem": "ren",
+      "hosted_earth_stem": null,
+      "heaven_stems": [],
+      "stars": [],
+      "door": null,
+      "deity": null,
+      "void_branches": [],
+      "is_horse": false
+    },
+    {
+      "number": 6,
+      "direction": "northwest",
+      "trigram": "qian",
+      "element": "metal",
+      "earth_stem": "xin",
+      "hosted_earth_stem": null,
+      "heaven_stems": [
+        {
+          "stem": "xin",
+          "source_palace": 6,
+          "is_center_hosted": false
+        }
+      ],
+      "stars": [
+        "tian_xin"
+      ],
+      "door": "kai",
+      "deity": "jiu_tian",
+      "void_branches": [],
+      "is_horse": false
+    },
+    {
+      "number": 7,
+      "direction": "west",
+      "trigram": "dui",
+      "element": "metal",
+      "earth_stem": "geng",
+      "hosted_earth_stem": null,
+      "heaven_stems": [
+        {
+          "stem": "geng",
+          "source_palace": 7,
+          "is_center_hosted": false
+        }
+      ],
+      "stars": [
+        "tian_zhu"
+      ],
+      "door": "jing",
+      "deity": "zhi_fu",
+      "void_branches": [],
+      "is_horse": false
+    },
+    {
+      "number": 8,
+      "direction": "northeast",
+      "trigram": "gen",
+      "element": "earth",
+      "earth_stem": "ji",
+      "hosted_earth_stem": null,
+      "heaven_stems": [
+        {
+          "stem": "ji",
+          "source_palace": 8,
+          "is_center_hosted": false
+        }
+      ],
+      "stars": [
+        "tian_ren"
+      ],
+      "door": "sheng",
+      "deity": "xuan_wu",
+      "void_branches": [],
+      "is_horse": true
+    },
+    {
+      "number": 9,
+      "direction": "south",
+      "trigram": "li",
+      "element": "fire",
+      "earth_stem": "wu",
+      "hosted_earth_stem": null,
+      "heaven_stems": [
+        {
+          "stem": "wu",
+          "source_palace": 9,
+          "is_center_hosted": false
+        }
+      ],
+      "stars": [
+        "tian_ying"
+      ],
+      "door": "scene",
+      "deity": "tai_yin",
+      "void_branches": [
+        "wu"
+      ],
+      "is_horse": false
+    }
+  ]
+}

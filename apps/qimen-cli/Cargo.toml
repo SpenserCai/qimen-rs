@@ -1,0 +1,22 @@
+[package]
+name = "qimen-cli"
+description = "奇门遁甲排盘与八字命令行工具 / Qimen Dunjia and Four Pillars CLI"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "qimen"
+path = "src/main.rs"
+
+[dependencies]
+clap.workspace = true
+qimen-calendar = { path = "../../crates/qimen-calendar", version = "0.1.0" }
+qimen-core = { path = "../../crates/qimen-core", version = "0.1.0" }
+serde_json.workspace = true
+unicode-width.workspace = true
+
+[lints]
+workspace = true

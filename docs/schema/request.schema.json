@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CalendarRequest",
+  "description": "Gregorian input and explicit calculation conventions.\n\nMissing JSON `minute` and `second` default to zero, `utc_offset_minutes` to\n480 (UTC+08:00), and `day_boundary` to `zi_start`. Unknown fields are rejected\nso a misspelled convention cannot silently change the result.",
+  "type": "object",
+  "properties": {
+    "day": {
+      "description": "Gregorian day, validated against the month and year.",
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0
+    },
+    "day_boundary": {
+      "description": "Day-pillar rollover convention.",
+      "$ref": "#/$defs/DayBoundary",
+      "default": "zi_start"
+    },
+    "hour": {
+      "description": "Local civil hour, 0–23.",
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0
+    },
+    "minute": {
+      "description": "Local civil minute, 0–59.",
+      "type": "integer",
+      "format": "uint32",
+      "default": 0,
+      "minimum": 0
+    },
+    "month": {
+      "description": "Gregorian month, 1–12.",
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0
+    },
+    "second": {
+      "description": "Local civil second, 0–59; leap seconds are not accepted.",
+      "type": "integer",
+      "format": "uint32",
+      "default": 0,
+      "minimum": 0
+    },
+    "utc_offset_minutes": {
+      "description": "Fixed offset east of UTC, in minutes, from −840 through +840.\nSupply the offset actually applicable at the requested date, including DST.",
+      "type": "integer",
+      "format": "int32",
+      "default": 480
+    },
+    "year": {
+      "description": "Gregorian year, inclusive range 1900–2100.",
+      "type": "integer",
+      "format": "int32"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "year",
+    "month",
+    "day",
+    "hour"
+  ],
+  "$defs": {
+    "DayBoundary": {
+      "description": "Civil-clock convention for the day pillar.",
+      "oneOf": [
+        {
+          "description": "Change the day pillar at 23:00, at the start of 子时.",
+          "type": "string",
+          "const": "zi_start"
+        },
+        {
+          "description": "Change the day pillar at 00:00. The 23:00 子 hour still uses the following\nday's stem for its hour pillar, preserving one pillar across 子时.",
+          "type": "string",
+          "const": "midnight"
+        }
+      ]
+    }
+  }
+}

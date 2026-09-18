@@ -1,0 +1,29 @@
+[package]
+name = "qimen-core"
+description = "Typed, deterministic time-based Chai Bu rotating Qimen Dunjia charts"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+readme = "README.md"
+keywords = ["qimen", "bazi", "calendar", "chinese", "divination"]
+categories = ["date-and-time"]
+
+[[example]]
+name = "schema"
+required-features = ["schema"]
+
+[features]
+default = []
+schema = ["dep:schemars", "qimen-calendar/schema"]
+
+[dependencies]
+qimen-calendar.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+schemars = { workspace = true, optional = true }
+
+[lints]
+workspace = true
