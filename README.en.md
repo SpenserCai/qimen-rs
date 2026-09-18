@@ -40,6 +40,8 @@ println!("{}", serde_json::to_string_pretty(&chart)?);
 # Ok::<(), Box<dyn std::error::Error>>(())
 ```
 
+Canonical contracts: [request schema](docs/schema/request.schema.json), [chart schema](docs/schema/chart.schema.json), and [complete example](docs/examples/2026-09-18T150000+0800.json).
+
 The common JSON request is:
 
 ```json
@@ -97,7 +99,7 @@ Interpretation and predictions are outside the foundational chart data model.
 
 CI checks formatting, warning-free compilation and Clippy, tests and documentation on Linux, macOS and Windows, plus native binding and WASM smoke tests. Tests live in separate files: public behavior in `tests/`, private unit tests in separate test modules when needed. Inline unit tests are also valid Rust; separation is this project's maintainability choice.
 
-Calendar fixtures, worked chart cases, structural invariants and adapter integration tests serve different purposes. Passing invariants alone is not independent proof of every chart. See [sources and verification limits](docs/algorithm-sources.md).
+Calendar fixtures, worked chart cases, structural invariants and adapter integration tests serve different purposes. Passing invariants alone is not independent proof of every chart. See [sources and verification limits](docs/algorithm-sources.md) and [validation evidence](docs/validation.md).
 
 For comparisons, provide the complete Gregorian timestamp, offset, rollover/solar-time/hosting settings and all nine palaces. Confirmed external cases should become permanent regression fixtures.
 

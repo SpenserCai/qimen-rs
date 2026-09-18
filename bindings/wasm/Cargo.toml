@@ -16,6 +16,7 @@ doctest = false
 [dependencies]
 qimen-core = { path = "../../crates/qimen-core", version = "0.1.0" }
 serde.workspace = true
+serde_json.workspace = true
 serde-wasm-bindgen = "0.6.5"
 wasm-bindgen = "0.2.128"
 

@@ -43,6 +43,7 @@ def main() -> int:
         ("clippy", ["cargo", "clippy", "--workspace", "--all-targets", "--locked", "--", "-D", "warnings"]),
         ("test", ["cargo", "test", "--workspace", "--locked", "--exclude", "qimen-python", "--exclude", "qimen-node", "--exclude", "qimen-wasm"]),
         ("docs", ["cargo", "doc", "--workspace", "--no-deps", "--locked"]),
+        ("schemas", [sys.executable, str(ROOT / "scripts" / "check-schemas.py")]),
     ]:
         results.append(run(name, command, args.diagnostics))
     # A failed format gate stays failed; the patch merely makes remote repair practical.

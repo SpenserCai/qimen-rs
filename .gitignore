@@ -28,7 +28,8 @@ node_modules/
 *.dll
 *.whl
 __pycache__/
-.venv/
+.venv*/
+calendar-check.json
 dist/
 bindings/wasm/pkg/
 quality-diagnostics/

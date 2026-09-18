@@ -10,7 +10,11 @@ use wasm_bindgen::prelude::*;
 /// Throws a JavaScript `Error` for invalid input or serialization failures.
 #[wasm_bindgen(skip_typescript)]
 pub fn calculate(request: JsValue) -> Result<JsValue, JsError> {
-    let request: qimen_core::ChartRequest = serde_wasm_bindgen::from_value(request)?;
+    // Direct struct deserialization only visits declared fields in
+    // serde-wasm-bindgen, bypassing serde's deny_unknown_fields validation.
+    // Preserve every object key before applying the canonical request schema.
+    let request: serde_json::Value = serde_wasm_bindgen::from_value(request)?;
+    let request: qimen_core::ChartRequest = serde_json::from_value(request)?;
     let chart =
         qimen_core::calculate(&request).map_err(|error| JsError::new(&error.to_string()))?;
     Ok(chart.serialize(&serde_wasm_bindgen::Serializer::json_compatible())?)

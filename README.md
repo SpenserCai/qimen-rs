@@ -54,6 +54,8 @@ println!("{}", serde_json::to_string_pretty(&chart)?);
 # Ok::<(), Box<dyn std::error::Error>>(())
 ```
 
+正式接口契约：[输入 Schema](docs/schema/request.schema.json)、[完整排盘 Schema](docs/schema/chart.schema.json)、[完整输出示例](docs/examples/2026-09-18T150000+0800.json)。
+
 JSON 入口也接受同样的请求：
 
 ```json
@@ -123,7 +125,7 @@ cargo build --release -p qimen-mcp
 
 项目质量门禁包括格式检查、零警告 Clippy、构建、测试和文档检查；跨 Linux、macOS、Windows 验证。测试使用独立文件：公开行为测试放 `tests/`，需要私有访问的单元测试使用独立测试模块。Rust 官方也允许内联单元测试，本项目选择分离是为了保持实现文件简洁。
 
-测试区分历法基准、手工推导案例、结构不变量与协议/绑定集成。结构不变量通过不等于整个排盘已经得到独立外部验证。算法来源与现有验证边界见 [算法与资料](docs/algorithm-sources.md)。
+测试区分历法基准、手工推导案例、结构不变量与协议/绑定集成。结构不变量通过不等于整个排盘已经得到独立外部验证。算法来源与现有验证边界见 [算法与资料](docs/algorithm-sources.md) 和 [验证记录及复现方式](docs/validation.md)。
 
 与排盘软件对照时，请提供输入年月日时分秒、UTC 偏移、换日/真太阳时/寄宫设置和完整九宫盘。经确认的案例应作为回归 fixture 加入仓库。
 
