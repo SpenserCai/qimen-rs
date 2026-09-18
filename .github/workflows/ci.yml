@@ -1,0 +1,217 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUTF8: '1'
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+  RUSTDOCFLAGS: -D warnings
+
+jobs:
+  workflows:
+    name: Workflow validation
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: actionlint@1.7.12
+      - run: actionlint
+
+  rust:
+    name: Rust (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-latest, macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Check formatting, warnings, tests and documentation
+        run: python scripts/check-quality.py
+      - name: Retain lockfile and complete failure diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostics-${{ matrix.os }}
+          path: |
+            Cargo.lock
+            quality-diagnostics/
+          retention-days: 14
+
+  msrv:
+    name: Minimum supported Rust
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Read declared minimum Rust version
+        id: msrv
+        run: python -c 'import os,tomllib; p=tomllib.load(open("Cargo.toml","rb")); open(os.environ["GITHUB_OUTPUT"],"a").write("version="+p["workspace"]["package"]["rust-version"]+"\n")'
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ steps.msrv.outputs.version }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: msrv
+      - name: Check all declared packages and targets on MSRV
+        run: cargo check --workspace --all-targets --locked
+
+  bindings:
+    name: Bindings (${{ matrix.target }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+          - os: macos-15-intel
+            target: x86_64-apple-darwin
+          - os: macos-14
+            target: aarch64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build Python wheel
+        uses: PyO3/maturin-action@v1
+        with:
+          command: build
+          target: ${{ matrix.target }}
+          manylinux: '2_28'
+          args: --manifest-path bindings/python/Cargo.toml --release --locked --out dist
+      - name: Install and test Python wheel
+        shell: bash
+        run: |
+          python -m pip install --no-index --find-links dist qimen-rs
+          python -m unittest discover -s bindings/python/tests -v
+      - name: Install Node build dependencies
+        working-directory: bindings/node
+        run: npm ci --ignore-scripts
+      - name: Build and test Node addon
+        working-directory: bindings/node
+        shell: bash
+        run: |
+          npm run build -- --target ${{ matrix.target }} -- --locked
+          npm test
+          npm pack --dry-run --ignore-scripts
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
+      - name: Test minimum supported CPython
+        shell: bash
+        run: |
+          python -m pip install --no-index --find-links dist qimen-rs
+          python -m unittest discover -s bindings/python/tests -v
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          package-manager-cache: false
+      - name: Test minimum supported Node.js
+        working-directory: bindings/node
+        run: npm test
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Test current LTS Node.js
+        working-directory: bindings/node
+        run: npm test
+      - name: Retain wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-${{ matrix.target }}
+          path: dist/*.whl
+          if-no-files-found: error
+      - name: Retain Node release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-${{ matrix.target }}
+          path: |
+            bindings/node/*.node
+            bindings/node/native.cjs
+            bindings/node/native.d.cts
+          if-no-files-found: error
+      - name: Retain npm lockfile
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-lock-${{ matrix.target }}
+          path: bindings/node/package-lock.json
+
+  wasm:
+    name: WebAssembly
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-pack
+      - name: Build and test WebAssembly binding
+        run: |
+          wasm-pack build bindings/wasm --target nodejs --out-dir pkg-node --release -- --locked
+          node bindings/wasm/tests/smoke.cjs
+          wasm-pack build bindings/wasm --target web --out-dir pkg --scope spensercai --release -- --locked
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wasm-package
+          path: bindings/wasm/pkg/
+          if-no-files-found: error
+
+  quality:
+    name: Quality gate
+    if: always()
+    needs: [workflows, rust, msrv, bindings, wasm]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Require every validation job
+        env:
+          WORKFLOWS_RESULT: ${{ needs.workflows.result }}
+          RUST_RESULT: ${{ needs.rust.result }}
+          MSRV_RESULT: ${{ needs.msrv.result }}
+          BINDINGS_RESULT: ${{ needs.bindings.result }}
+          WASM_RESULT: ${{ needs.wasm.result }}
+        run: |
+          test "$WORKFLOWS_RESULT" = success
+          test "$RUST_RESULT" = success
+          test "$MSRV_RESULT" = success
+          test "$BINDINGS_RESULT" = success
+          test "$WASM_RESULT" = success

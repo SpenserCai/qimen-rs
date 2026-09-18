@@ -1,0 +1,32 @@
+name: 排盘准确性反馈
+description: 报告可复现的八字、节气或奇门排盘差异
+title: '[准确性] '
+body:
+  - type: input
+    id: version
+    attributes:
+      label: qimen-rs 版本或 commit
+    validations:
+      required: true
+  - type: textarea
+    id: input
+    attributes:
+      label: 完整输入
+      description: 公历时间（到秒）、时区或UTC偏移、换日约定、经纬度或真太阳时设置、完整请求JSON。
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际完整 JSON 输出
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望结果及来源
+      description: 提供对照软件名称、版本、流派和参数，附截图或可追溯文献；标出具体不同宫位／字段。
+    validations:
+      required: true

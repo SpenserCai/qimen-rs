@@ -1,0 +1,228 @@
+name: Release
+
+on:
+  push:
+    tags: ['v[0-9]*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  metadata:
+    name: Validate release tag
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Require a version tag and synchronized metadata
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_REF_TYPE: ${{ github.ref_type }}
+        run: |
+          test "$RELEASE_REF_TYPE" = tag
+          python scripts/release.py validate "$RELEASE_TAG"
+
+  verify:
+    name: Verify exact release commit
+    needs: metadata
+    uses: ./.github/workflows/ci.yml
+
+  binaries:
+    name: Applications (${{ matrix.target }})
+    needs: verify
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+          - os: macos-15-intel
+            target: x86_64-apple-darwin
+          - os: macos-14
+            target: aarch64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+    runs-on: ${{ matrix.os }}
+    env:
+      RUSTFLAGS: -D warnings
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+      - name: Build CLI and MCP server
+        run: cargo build --locked --release --target ${{ matrix.target }} -p qimen-cli -p qimen-mcp
+      - name: Smoke-test release executables
+        shell: bash
+        run: |
+          target/${{ matrix.target }}/release/qimen --version
+          target/${{ matrix.target }}/release/qimen-mcp --version
+      - name: Archive applications with checksums
+        run: python scripts/release.py archive ${{ matrix.target }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: applications-${{ matrix.target }}
+          path: dist/*
+          if-no-files-found: error
+
+  source:
+    name: Python source distribution
+    needs: verify
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --manifest-path bindings/python/Cargo.toml --out dist
+      - name: Build and test the source distribution independently
+        run: |
+          python -m pip wheel --no-deps dist/*.tar.gz --wheel-dir source-wheel
+          python -m pip install --no-index --find-links source-wheel qimen-rs
+          python -m unittest discover -s bindings/python/tests -v
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-source
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  github-release:
+    name: Publish downloadable applications
+    needs: [binaries, source]
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: applications-*
+          path: release
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: release/*
+
+  crates:
+    name: Publish crates.io packages
+    needs: github-release
+    if: vars.PUBLISH_CRATES == 'true'
+    runs-on: ubuntu-22.04
+    environment: crates-io
+    env:
+      CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      RUSTFLAGS: -D warnings
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Publish dependency order
+        run: |
+          test -n "$CARGO_REGISTRY_TOKEN"
+          cargo publish --locked -p qimen-calendar
+          cargo publish --locked -p qimen-core
+          cargo publish --locked -p qimen-cli
+          cargo publish --locked -p qimen-mcp
+
+  pypi:
+    name: Publish Python packages
+    needs: github-release
+    if: vars.PUBLISH_PYPI == 'true'
+    runs-on: ubuntu-22.04
+    environment: pypi
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: python-*
+          path: dist
+          merge-multiple: true
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          packages-dir: dist/
+
+  npm:
+    name: Publish Node packages
+    needs: github-release
+    if: vars.PUBLISH_NPM == 'true'
+    runs-on: ubuntu-22.04
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: node-*
+          path: bindings/node/artifacts
+      - name: Collect complete native package set
+        working-directory: bindings/node
+        run: |
+          npm ci --ignore-scripts
+          npx napi create-npm-dirs
+          npx napi artifacts --output-dir artifacts --npm-dir npm
+          cp artifacts/node-x86_64-unknown-linux-gnu/native.cjs native.cjs
+          cp artifacts/node-x86_64-unknown-linux-gnu/native.d.cts native.d.cts
+          node scripts/check-artifacts.cjs
+          npm pack --dry-run --ignore-scripts
+      - name: Publish platform packages, then root package
+        working-directory: bindings/node
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'
+        run: |
+          test -n "$NODE_AUTH_TOKEN"
+          npm run prepublish:native
+          npm publish --access public --provenance --ignore-scripts
+
+  wasm:
+    name: Publish WebAssembly package
+    needs: github-release
+    if: vars.PUBLISH_WASM == 'true'
+    runs-on: ubuntu-22.04
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: wasm-package
+          path: wasm
+      - name: Publish browser WebAssembly package
+        working-directory: wasm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          test -n "$NODE_AUTH_TOKEN"
+          npm publish --access public --provenance --ignore-scripts

@@ -1,0 +1,1132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Chart",
+  "description": "A complete, reproducible, language-independent Qimen chart.",
+  "type": "object",
+  "properties": {
+    "calendar": {
+      "description": "Four pillars, surrounding solar terms and lunar date.",
+      "$ref": "#/$defs/CalendarResult"
+    },
+    "conventions": {
+      "description": "Explicit center-hosting, star and annotation conventions.",
+      "$ref": "#/$defs/Conventions"
+    },
+    "dun": {
+      "description": "Yang or yin dun.",
+      "$ref": "#/$defs/Dun"
+    },
+    "horse": {
+      "description": "Hour-branch travelling horse.",
+      "$ref": "#/$defs/Horse"
+    },
+    "input": {
+      "description": "The exact validated civil input and its selected calendar conventions.",
+      "$ref": "#/$defs/CalendarRequest"
+    },
+    "ju": {
+      "description": "Formation number, one through nine.",
+      "type": "integer",
+      "format": "uint8",
+      "maximum": 255,
+      "minimum": 0
+    },
+    "leaders": {
+      "description": "Duty star and door with source and destination palaces.",
+      "$ref": "#/$defs/Leaders"
+    },
+    "method": {
+      "description": "Calculation school and plate method.",
+      "$ref": "#/$defs/Method"
+    },
+    "palaces": {
+      "description": "The nine palaces, always in numeric Luo Shu order, one through nine.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Palace"
+      },
+      "maxItems": 9,
+      "minItems": 9
+    },
+    "pillar_voids": {
+      "description": "Void branches for each of the four pillars.",
+      "$ref": "#/$defs/PillarVoids"
+    },
+    "schema_version": {
+      "description": "Structural output-schema version, independent of the crate release.",
+      "type": "string"
+    },
+    "xun": {
+      "description": "Hour-period head, hidden stem and void branches.",
+      "$ref": "#/$defs/Xun"
+    },
+    "yuan": {
+      "description": "Five-day upper, middle or lower yuan.",
+      "$ref": "#/$defs/Yuan"
+    },
+    "yuan_head": {
+      "description": "Five-day 甲/己 head (符头) used to select the yuan.",
+      "$ref": "#/$defs/Cycle"
+    }
+  },
+  "required": [
+    "schema_version",
+    "input",
+    "calendar",
+    "method",
+    "conventions",
+    "dun",
+    "yuan",
+    "ju",
+    "yuan_head",
+    "xun",
+    "leaders",
+    "horse",
+    "pillar_voids",
+    "palaces"
+  ],
+  "$defs": {
+    "AnnotationBasis": {
+      "description": "The pillar used for a chart-level branch annotation.",
+      "oneOf": [
+        {
+          "description": "Use the hour pillar.",
+          "type": "string",
+          "const": "hour"
+        }
+      ]
+    },
+    "Branch": {
+      "description": "The twelve earthly branches in their traditional order.",
+      "oneOf": [
+        {
+          "description": "子, rat.",
+          "type": "string",
+          "const": "zi"
+        },
+        {
+          "description": "丑, ox.",
+          "type": "string",
+          "const": "chou"
+        },
+        {
+          "description": "寅, tiger.",
+          "type": "string",
+          "const": "yin"
+        },
+        {
+          "description": "卯, rabbit.",
+          "type": "string",
+          "const": "mao"
+        },
+        {
+          "description": "辰, dragon.",
+          "type": "string",
+          "const": "chen"
+        },
+        {
+          "description": "巳, snake.",
+          "type": "string",
+          "const": "si"
+        },
+        {
+          "description": "午, horse.",
+          "type": "string",
+          "const": "wu"
+        },
+        {
+          "description": "未, goat.",
+          "type": "string",
+          "const": "wei"
+        },
+        {
+          "description": "申, monkey.",
+          "type": "string",
+          "const": "shen"
+        },
+        {
+          "description": "酉, rooster.",
+          "type": "string",
+          "const": "you"
+        },
+        {
+          "description": "戌, dog.",
+          "type": "string",
+          "const": "xu"
+        },
+        {
+          "description": "亥, pig.",
+          "type": "string",
+          "const": "hai"
+        }
+      ]
+    },
+    "CalendarRequest": {
+      "description": "Gregorian input and explicit calculation conventions.\n\nMissing JSON `minute` and `second` default to zero, `utc_offset_minutes` to\n480 (UTC+08:00), and `day_boundary` to `zi_start`. Unknown fields are rejected\nso a misspelled convention cannot silently change the result.",
+      "type": "object",
+      "properties": {
+        "day": {
+          "description": "Gregorian day, validated against the month and year.",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "day_boundary": {
+          "description": "Day-pillar rollover convention.",
+          "$ref": "#/$defs/DayBoundary",
+          "default": "zi_start"
+        },
+        "hour": {
+          "description": "Local civil hour, 0–23.",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "minute": {
+          "description": "Local civil minute, 0–59.",
+          "type": "integer",
+          "format": "uint32",
+          "default": 0,
+          "minimum": 0
+        },
+        "month": {
+          "description": "Gregorian month, 1–12.",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "second": {
+          "description": "Local civil second, 0–59; leap seconds are not accepted.",
+          "type": "integer",
+          "format": "uint32",
+          "default": 0,
+          "minimum": 0
+        },
+        "utc_offset_minutes": {
+          "description": "Fixed offset east of UTC, in minutes, from −840 through +840.\nSupply the offset actually applicable at the requested date, including DST.",
+          "type": "integer",
+          "format": "int32",
+          "default": 480
+        },
+        "year": {
+          "description": "Gregorian year, inclusive range 1900–2100.",
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "year",
+        "month",
+        "day",
+        "hour"
+      ]
+    },
+    "CalendarResult": {
+      "description": "Calendar data required for a reproducible Qimen chart.",
+      "type": "object",
+      "properties": {
+        "four_pillars": {
+          "description": "Computed year, month, day and hour pillars.",
+          "$ref": "#/$defs/FourPillars"
+        },
+        "lunar_date": {
+          "description": "Chinese lunar calendar label for the input civil date.",
+          "$ref": "#/$defs/LunarDate"
+        },
+        "next_solar_term": {
+          "description": "The following solar term, useful for boundary verification.",
+          "$ref": "#/$defs/SolarTerm"
+        },
+        "solar_term": {
+          "description": "Most recent solar term; equality belongs to this new term.",
+          "$ref": "#/$defs/SolarTerm"
+        }
+      },
+      "required": [
+        "four_pillars",
+        "solar_term",
+        "next_solar_term",
+        "lunar_date"
+      ]
+    },
+    "CenterPalaceRule": {
+      "description": "The supported center-palace convention.",
+      "oneOf": [
+        {
+          "description": "Always host palace five in palace two, for both yang and yin dun.",
+          "type": "string",
+          "const": "always_kun"
+        }
+      ]
+    },
+    "CivilDateTime": {
+      "description": "An unambiguous second-resolution civil timestamp with a fixed UTC offset.",
+      "type": "object",
+      "properties": {
+        "day": {
+          "description": "Gregorian day, 1–31.",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "hour": {
+          "description": "Local hour, 0–23.",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "minute": {
+          "description": "Local minute, 0–59.",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "month": {
+          "description": "Gregorian month, 1–12.",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "second": {
+          "description": "Local second, 0–59.",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "utc_offset_minutes": {
+          "description": "Minutes east of UTC.",
+          "type": "integer",
+          "format": "int32"
+        },
+        "year": {
+          "description": "Gregorian year.",
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "required": [
+        "year",
+        "month",
+        "day",
+        "hour",
+        "minute",
+        "second",
+        "utc_offset_minutes"
+      ]
+    },
+    "Conventions": {
+      "description": "Explicit conventions needed when comparing results between schools/software.",
+      "type": "object",
+      "properties": {
+        "center_palace": {
+          "description": "Center-palace hosting rule.",
+          "$ref": "#/$defs/CenterPalaceRule"
+        },
+        "horse_basis": {
+          "description": "Basis for the horse marker.",
+          "$ref": "#/$defs/AnnotationBasis"
+        },
+        "tian_qin": {
+          "description": "Central-star movement rule.",
+          "$ref": "#/$defs/TianQinRule"
+        },
+        "void_basis": {
+          "description": "Basis for the void markers on individual palaces.",
+          "$ref": "#/$defs/AnnotationBasis"
+        }
+      },
+      "required": [
+        "center_palace",
+        "tian_qin",
+        "void_basis",
+        "horse_basis"
+      ]
+    },
+    "Cycle": {
+      "description": "A stem–branch pair within the sixty-position sexagenary cycle.",
+      "type": "object",
+      "properties": {
+        "branch": {
+          "description": "Earthly branch.",
+          "$ref": "#/$defs/Branch"
+        },
+        "index": {
+          "description": "Zero-based cycle position: 甲子 = 0, 癸亥 = 59.",
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "stem": {
+          "description": "Heavenly stem.",
+          "$ref": "#/$defs/Stem"
+        }
+      },
+      "required": [
+        "index",
+        "stem",
+        "branch"
+      ]
+    },
+    "DayBoundary": {
+      "description": "Civil-clock convention for the day pillar.",
+      "oneOf": [
+        {
+          "description": "Change the day pillar at 23:00, at the start of 子时.",
+          "type": "string",
+          "const": "zi_start"
+        },
+        {
+          "description": "Change the day pillar at 00:00. The 23:00 子 hour still uses the following\nday's stem for its hour pillar, preserving one pillar across 子时.",
+          "type": "string",
+          "const": "midnight"
+        }
+      ]
+    },
+    "Deity": {
+      "description": "One of the eight deities, starting from the duty star's current palace.",
+      "oneOf": [
+        {
+          "description": "值符.",
+          "type": "string",
+          "const": "zhi_fu"
+        },
+        {
+          "description": "螣蛇.",
+          "type": "string",
+          "const": "teng_she"
+        },
+        {
+          "description": "太阴.",
+          "type": "string",
+          "const": "tai_yin"
+        },
+        {
+          "description": "六合.",
+          "type": "string",
+          "const": "liu_he"
+        },
+        {
+          "description": "白虎.",
+          "type": "string",
+          "const": "bai_hu"
+        },
+        {
+          "description": "玄武.",
+          "type": "string",
+          "const": "xuan_wu"
+        },
+        {
+          "description": "九地.",
+          "type": "string",
+          "const": "jiu_di"
+        },
+        {
+          "description": "九天.",
+          "type": "string",
+          "const": "jiu_tian"
+        }
+      ]
+    },
+    "Direction": {
+      "description": "Palace directions on the Later Heaven / Luo Shu arrangement.",
+      "oneOf": [
+        {
+          "description": "North.",
+          "type": "string",
+          "const": "north"
+        },
+        {
+          "description": "Southwest.",
+          "type": "string",
+          "const": "southwest"
+        },
+        {
+          "description": "East.",
+          "type": "string",
+          "const": "east"
+        },
+        {
+          "description": "Southeast.",
+          "type": "string",
+          "const": "southeast"
+        },
+        {
+          "description": "Center.",
+          "type": "string",
+          "const": "center"
+        },
+        {
+          "description": "Northwest.",
+          "type": "string",
+          "const": "northwest"
+        },
+        {
+          "description": "West.",
+          "type": "string",
+          "const": "west"
+        },
+        {
+          "description": "Northeast.",
+          "type": "string",
+          "const": "northeast"
+        },
+        {
+          "description": "South.",
+          "type": "string",
+          "const": "south"
+        }
+      ]
+    },
+    "Door": {
+      "description": "One of the eight doors.",
+      "oneOf": [
+        {
+          "description": "休门, home palace one.",
+          "type": "string",
+          "const": "xiu"
+        },
+        {
+          "description": "死门, home palace two.",
+          "type": "string",
+          "const": "si"
+        },
+        {
+          "description": "伤门, home palace three.",
+          "type": "string",
+          "const": "shang"
+        },
+        {
+          "description": "杜门, home palace four.",
+          "type": "string",
+          "const": "du"
+        },
+        {
+          "description": "开门, home palace six.",
+          "type": "string",
+          "const": "kai"
+        },
+        {
+          "description": "惊门, home palace seven.",
+          "type": "string",
+          "const": "jing"
+        },
+        {
+          "description": "生门, home palace eight.",
+          "type": "string",
+          "const": "sheng"
+        },
+        {
+          "description": "景门, home palace nine.",
+          "type": "string",
+          "const": "scene"
+        }
+      ]
+    },
+    "Dun": {
+      "description": "Yang or yin dun, determined by the current solar term.",
+      "oneOf": [
+        {
+          "description": "阳遁, winter solstice through the start of summer solstice.",
+          "type": "string",
+          "const": "yang"
+        },
+        {
+          "description": "阴遁, summer solstice through the start of winter solstice.",
+          "type": "string",
+          "const": "yin"
+        }
+      ]
+    },
+    "Element": {
+      "description": "One of the five traditional elements.",
+      "oneOf": [
+        {
+          "description": "木.",
+          "type": "string",
+          "const": "wood"
+        },
+        {
+          "description": "火.",
+          "type": "string",
+          "const": "fire"
+        },
+        {
+          "description": "土.",
+          "type": "string",
+          "const": "earth"
+        },
+        {
+          "description": "金.",
+          "type": "string",
+          "const": "metal"
+        },
+        {
+          "description": "水.",
+          "type": "string",
+          "const": "water"
+        }
+      ]
+    },
+    "FourPillars": {
+      "description": "The four sexagenary pillars, with exact term boundaries for year and month.",
+      "type": "object",
+      "properties": {
+        "day": {
+          "description": "Day pillar under the selected local-clock rollover convention.",
+          "$ref": "#/$defs/Cycle"
+        },
+        "hour": {
+          "description": "Hour pillar; 子时 begins at 23:00.",
+          "$ref": "#/$defs/Cycle"
+        },
+        "month": {
+          "description": "Month pillar, changing at the twelve 节 instants.",
+          "$ref": "#/$defs/Cycle"
+        },
+        "year": {
+          "description": "Year pillar, changing at 立春.",
+          "$ref": "#/$defs/Cycle"
+        }
+      },
+      "required": [
+        "year",
+        "month",
+        "day",
+        "hour"
+      ]
+    },
+    "HeavenStem": {
+      "description": "A heavenly-plate stem, including its provenance and center-hosting identity.",
+      "type": "object",
+      "properties": {
+        "is_center_hosted": {
+          "description": "True only for the palace-five stem travelling with 天禽.",
+          "type": "boolean"
+        },
+        "source_palace": {
+          "description": "Earth-plate palace from which the stem was rotated.",
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "stem": {
+          "description": "One of the three wonders or six instruments (never visible 甲).",
+          "$ref": "#/$defs/Stem"
+        }
+      },
+      "required": [
+        "stem",
+        "source_palace",
+        "is_center_hosted"
+      ]
+    },
+    "Horse": {
+      "description": "The hour-branch travelling horse.",
+      "type": "object",
+      "properties": {
+        "branch": {
+          "description": "One of 寅, 申, 巳 or 亥.",
+          "$ref": "#/$defs/Branch"
+        },
+        "palace": {
+          "description": "Luo Shu palace number containing the horse branch.",
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        }
+      },
+      "required": [
+        "branch",
+        "palace"
+      ]
+    },
+    "Leaders": {
+      "description": "Duty star and duty door, preserving the original center palace when relevant.",
+      "type": "object",
+      "properties": {
+        "door": {
+          "description": "值使门; palace five uses 死门 under the selected hosting convention.",
+          "$ref": "#/$defs/Door"
+        },
+        "door_palace": {
+          "description": "Current palace of the duty door, after center hosting.",
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "door_raw_palace": {
+          "description": "Duty-door numeric flight result before center hosting; may be five.",
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "original_palace": {
+          "description": "Earth palace containing the period's hidden stem, before hosting.",
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "star": {
+          "description": "值符星; this is 天禽 when the period's hidden stem originated in palace five.",
+          "$ref": "#/$defs/Star"
+        },
+        "star_palace": {
+          "description": "Current palace of the duty star, after center hosting.",
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        }
+      },
+      "required": [
+        "star",
+        "door",
+        "original_palace",
+        "star_palace",
+        "door_palace",
+        "door_raw_palace"
+      ]
+    },
+    "LunarDate": {
+      "description": "Chinese lunar calendar label for the supplied local Gregorian date.\n\nThis is the conventional Chinese calendar date conversion, not an\nindependent astronomical lunar calendar recalculated for the input timezone.",
+      "type": "object",
+      "properties": {
+        "day": {
+          "description": "Lunar day number, 1–30.",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "is_leap_month": {
+          "description": "Whether the month is an intercalary month.",
+          "type": "boolean"
+        },
+        "month": {
+          "description": "Lunar month number, 1–12.",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "name": {
+          "description": "Traditional Chinese display label.",
+          "type": "string"
+        },
+        "year": {
+          "description": "Lunar calendar year.",
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "required": [
+        "year",
+        "month",
+        "day",
+        "is_leap_month",
+        "name"
+      ]
+    },
+    "Method": {
+      "description": "A supported chart construction method.",
+      "oneOf": [
+        {
+          "description": "时家拆补转盘: use the active solar term and five-day head independently.",
+          "type": "string",
+          "const": "shi_jia_chai_bu_zhuan_pan"
+        }
+      ]
+    },
+    "Palace": {
+      "description": "All fixed and moving components of one Luo Shu palace.",
+      "type": "object",
+      "properties": {
+        "deity": {
+          "description": "Moving deity; absent at the center.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Deity"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "direction": {
+          "description": "Geographic direction (the center has its own value).",
+          "$ref": "#/$defs/Direction"
+        },
+        "door": {
+          "description": "Moving door; absent at the center.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Door"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "earth_stem": {
+          "description": "Native earth-plate stem, including the actual center stem at palace five.",
+          "$ref": "#/$defs/Stem"
+        },
+        "element": {
+          "description": "Fixed palace element.",
+          "$ref": "#/$defs/Element"
+        },
+        "heaven_stems": {
+          "description": "Rotated heavenly-plate stems; two with 天芮/天禽, none at the center.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/HeavenStem"
+          }
+        },
+        "hosted_earth_stem": {
+          "description": "Additional center earth stem hosted at 坤二; absent elsewhere.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Stem"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "is_horse": {
+          "description": "Whether the hour-branch travelling horse occupies this palace.",
+          "type": "boolean"
+        },
+        "number": {
+          "description": "Luo Shu number, one through nine; the output array is in this order.",
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "stars": {
+          "description": "Moving stars; two with 天芮/天禽, none at the center.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Star"
+          }
+        },
+        "trigram": {
+          "description": "Later Heaven trigram; absent for the center.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Trigram"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "void_branches": {
+          "description": "Hour-pillar void branches contained in this palace; may hold both.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Branch"
+          }
+        }
+      },
+      "required": [
+        "number",
+        "direction",
+        "element",
+        "earth_stem",
+        "heaven_stems",
+        "stars",
+        "void_branches",
+        "is_horse"
+      ]
+    },
+    "PillarVoids": {
+      "description": "The two void branches of each pillar; palace markers use the hour pair.",
+      "type": "object",
+      "properties": {
+        "day": {
+          "description": "Day-pillar void branches.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Branch"
+          },
+          "maxItems": 2,
+          "minItems": 2
+        },
+        "hour": {
+          "description": "Hour-pillar void branches.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Branch"
+          },
+          "maxItems": 2,
+          "minItems": 2
+        },
+        "month": {
+          "description": "Month-pillar void branches.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Branch"
+          },
+          "maxItems": 2,
+          "minItems": 2
+        },
+        "year": {
+          "description": "Year-pillar void branches.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Branch"
+          },
+          "maxItems": 2,
+          "minItems": 2
+        }
+      },
+      "required": [
+        "year",
+        "month",
+        "day",
+        "hour"
+      ]
+    },
+    "SolarTerm": {
+      "description": "One solar-term boundary in the request's fixed UTC offset.",
+      "type": "object",
+      "properties": {
+        "index": {
+          "description": "Traditional index: 冬至 = 0, 小寒 = 1, …, 大雪 = 23.",
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "name": {
+          "description": "Chinese name.",
+          "type": "string"
+        },
+        "start": {
+          "description": "Calculated start instant, at second resolution.",
+          "$ref": "#/$defs/CivilDateTime"
+        }
+      },
+      "required": [
+        "index",
+        "name",
+        "start"
+      ]
+    },
+    "Star": {
+      "description": "One of the nine stars; 天禽 is explicitly carried with 天芮.",
+      "oneOf": [
+        {
+          "description": "天蓬, home palace one.",
+          "type": "string",
+          "const": "tian_peng"
+        },
+        {
+          "description": "天芮, home palace two.",
+          "type": "string",
+          "const": "tian_rui"
+        },
+        {
+          "description": "天冲, home palace three.",
+          "type": "string",
+          "const": "tian_chong"
+        },
+        {
+          "description": "天辅, home palace four.",
+          "type": "string",
+          "const": "tian_fu"
+        },
+        {
+          "description": "天禽, home palace five and hosted with 天芮.",
+          "type": "string",
+          "const": "tian_qin"
+        },
+        {
+          "description": "天心, home palace six.",
+          "type": "string",
+          "const": "tian_xin"
+        },
+        {
+          "description": "天柱, home palace seven.",
+          "type": "string",
+          "const": "tian_zhu"
+        },
+        {
+          "description": "天任, home palace eight.",
+          "type": "string",
+          "const": "tian_ren"
+        },
+        {
+          "description": "天英, home palace nine.",
+          "type": "string",
+          "const": "tian_ying"
+        }
+      ]
+    },
+    "Stem": {
+      "description": "The ten heavenly stems in their traditional order.",
+      "oneOf": [
+        {
+          "description": "甲, yang wood.",
+          "type": "string",
+          "const": "jia"
+        },
+        {
+          "description": "乙, yin wood.",
+          "type": "string",
+          "const": "yi"
+        },
+        {
+          "description": "丙, yang fire.",
+          "type": "string",
+          "const": "bing"
+        },
+        {
+          "description": "丁, yin fire.",
+          "type": "string",
+          "const": "ding"
+        },
+        {
+          "description": "戊, yang earth.",
+          "type": "string",
+          "const": "wu"
+        },
+        {
+          "description": "己, yin earth.",
+          "type": "string",
+          "const": "ji"
+        },
+        {
+          "description": "庚, yang metal.",
+          "type": "string",
+          "const": "geng"
+        },
+        {
+          "description": "辛, yin metal.",
+          "type": "string",
+          "const": "xin"
+        },
+        {
+          "description": "壬, yang water.",
+          "type": "string",
+          "const": "ren"
+        },
+        {
+          "description": "癸, yin water.",
+          "type": "string",
+          "const": "gui"
+        }
+      ]
+    },
+    "TianQinRule": {
+      "description": "The supported placement of the central star.",
+      "oneOf": [
+        {
+          "description": "天禽 and its center earth stem travel with 天芮.",
+          "type": "string",
+          "const": "follows_tian_rui"
+        }
+      ]
+    },
+    "Trigram": {
+      "description": "One of the eight Later Heaven trigrams.",
+      "oneOf": [
+        {
+          "description": "坎, palace one.",
+          "type": "string",
+          "const": "kan"
+        },
+        {
+          "description": "坤, palace two.",
+          "type": "string",
+          "const": "kun"
+        },
+        {
+          "description": "震, palace three.",
+          "type": "string",
+          "const": "zhen"
+        },
+        {
+          "description": "巽, palace four.",
+          "type": "string",
+          "const": "xun"
+        },
+        {
+          "description": "乾, palace six.",
+          "type": "string",
+          "const": "qian"
+        },
+        {
+          "description": "兑, palace seven.",
+          "type": "string",
+          "const": "dui"
+        },
+        {
+          "description": "艮, palace eight.",
+          "type": "string",
+          "const": "gen"
+        },
+        {
+          "description": "离, palace nine.",
+          "type": "string",
+          "const": "li"
+        }
+      ]
+    },
+    "Xun": {
+      "description": "The hour's ten-position period and its hidden 甲 stem.",
+      "type": "object",
+      "properties": {
+        "head": {
+          "description": "甲子, 甲戌, 甲申, 甲午, 甲辰 or 甲寅.",
+          "$ref": "#/$defs/Cycle"
+        },
+        "hidden_stem": {
+          "description": "戊, 己, 庚, 辛, 壬 or 癸, respectively.",
+          "$ref": "#/$defs/Stem"
+        },
+        "void_branches": {
+          "description": "The two unpaired branches for this period.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Branch"
+          },
+          "maxItems": 2,
+          "minItems": 2
+        }
+      },
+      "required": [
+        "head",
+        "hidden_stem",
+        "void_branches"
+      ]
+    },
+    "Yuan": {
+      "description": "The five-day yuan determined from the day's 甲/己 head.",
+      "oneOf": [
+        {
+          "description": "上元: the head's branch is 子午卯酉.",
+          "type": "string",
+          "const": "upper"
+        },
+        {
+          "description": "中元: the head's branch is 寅申巳亥.",
+          "type": "string",
+          "const": "middle"
+        },
+        {
+          "description": "下元: the head's branch is 辰戌丑未.",
+          "type": "string",
+          "const": "lower"
+        }
+      ]
+    }
+  }
+}

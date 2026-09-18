@@ -1,0 +1,60 @@
+{
+  "name": "@spensercai/qimen-rs",
+  "version": "0.1.0",
+  "description": "Rust-powered BaZi and hour-school Chai Bu rotating Qimen Dunjia charts",
+  "license": "MIT",
+  "main": "index.cjs",
+  "module": "index.mjs",
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.mjs",
+      "require": "./index.cjs"
+    }
+  },
+  "files": [
+    "index.cjs",
+    "index.mjs",
+    "index.d.ts",
+    "schema.d.ts",
+    "native.cjs",
+    "native.d.cts",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SpenserCai/qimen-rs.git",
+    "directory": "bindings/node"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "napi": {
+    "binaryName": "qimen",
+    "targets": [
+      "x86_64-unknown-linux-gnu",
+      "aarch64-unknown-linux-gnu",
+      "x86_64-apple-darwin",
+      "aarch64-apple-darwin",
+      "x86_64-pc-windows-msvc"
+    ]
+  },
+  "scripts": {
+    "build": "napi build --platform --release --js native.cjs --dts native.d.cts",
+    "build:debug": "napi build --platform --js native.cjs --dts native.d.cts",
+    "test": "npm run typecheck && node --test tests/*.test.cjs",
+    "create-npm-dirs": "napi create-npm-dirs",
+    "artifacts": "napi artifacts --output-dir artifacts --npm-dir npm",
+    "prepublish:native": "node scripts/check-artifacts.cjs && napi pre-publish -t npm --no-gh-release",
+    "typecheck": "tsc --project tsconfig.json"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^3",
+    "typescript": "^7.0.2"
+  }
+}

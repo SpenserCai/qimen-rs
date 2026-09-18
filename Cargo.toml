@@ -1,0 +1,38 @@
+[workspace]
+members = ["crates/*", "apps/*", "bindings/python", "bindings/node", "bindings/wasm"]
+default-members = ["crates/qimen-calendar", "crates/qimen-core", "apps/qimen-cli", "apps/qimen-mcp"]
+resolver = "3"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94"
+license = "MIT"
+authors = ["SpenserCai"]
+repository = "https://github.com/SpenserCai/qimen-rs"
+homepage = "https://github.com/SpenserCai/qimen-rs"
+
+[workspace.dependencies]
+qimen-calendar = { path = "crates/qimen-calendar", version = "0.1.0" }
+qimen-core = { path = "crates/qimen-core", version = "0.1.0" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+schemars = "1"
+thiserror = "2"
+tyme4rs = "=1.5.0"
+clap = { version = "4.6.7", features = ["derive"] }
+rmcp = { version = "=3.4.0", default-features = false, features = ["server", "transport-io", "macros", "schemars"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "io-util", "time"] }
+unicode-width = "0.2"
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "debuginfo"

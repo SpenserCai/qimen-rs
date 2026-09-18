@@ -1,0 +1,27 @@
+[build-system]
+requires = ["maturin>=1.9,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "qimen-rs"
+dynamic = ["version"]
+description = "Rust-powered BaZi and hour-school Chai Bu rotating Qimen Dunjia charts"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+keywords = ["qimen", "bazi", "chinese-calendar", "rust"]
+classifiers = [
+  "Programming Language :: Rust",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Typing :: Typed",
+]
+
+[project.urls]
+Repository = "https://github.com/SpenserCai/qimen-rs"
+Issues = "https://github.com/SpenserCai/qimen-rs/issues"
+
+[tool.maturin]
+python-source = "python"
+module-name = "qimen_rs._native"
+features = ["extension-module"]

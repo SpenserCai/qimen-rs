@@ -1,0 +1,25 @@
+[package]
+name = "qimen-node"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Node-API bindings for qimen-core"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+test = false
+doctest = false
+
+[dependencies]
+napi = { version = "3.12.6", default-features = false, features = ["napi8"] }
+napi-derive = "3.6.7"
+qimen-core = { path = "../../crates/qimen-core", version = "0.1.0" }
+
+[build-dependencies]
+napi-build = "2.4.3"
+
+[lints]
+workspace = true
