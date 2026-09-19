@@ -1,24 +1,26 @@
-# 可选排盘注记：规则、适用范围与核验
+# 可选扩展规则
 
-核阅日期：2026-09-19。基础盘约定见 [algorithm-sources.md](algorithm-sources.md)。本页定义暗干、旺衰、十二长生、刑墓、门迫和日马的计算口径，不提供吉凶断语。
+[中文首页](../README.md) · [基础盘算法](algorithm-sources.md) · [测试指南](validation.md)
 
-## “常用”不等于所有流派唯一标准
+本页定义暗干、旺衰、十二长生、刑墓、门迫和日马的计算口径，不提供吉凶断语。
+
+## 适用范围
 
 这些概念大多有传统文献依据，也广泛用于时家拆补转盘的读盘；它们不都是组成基本盘的必备盘层，更不存在一套跨所有奇门流派、所有软件的唯一注记规范。应将其作为可选扩展，并在结果中记录启用项和规则。
 
 | 注记 | 性质 | 与当前盘式的关系 | 向其他盘式复用的条件 |
 | --- | --- | --- | --- |
-| 暗干 | 另加的干盘，起法有分歧 | 本轮支持明确命名的值使起时干法；门下藏干仅作流派对照 | 必须核对该盘式的值使、旬首、宫序及中宫约定，不能无条件套用 |
+| 暗干 | 另加的干盘，起法有分歧 | 支持明确命名的值使起时干法；门下藏干仅作流派对照 | 必须核对该盘式的值使、旬首、宫序及中宫约定，不能无条件套用 |
 | 旺衰 | 五行关系注记，九星另有传统规则 | 分别评价落宫和月令；星与门、干不能共用同一张状态表 | 五行关系函数可复用，但主柱、星门体系和月令口径须确认 |
 | 十二长生 | 十干与十二地支的循环关系 | 对每个实际干及落宫地支分别计算，保留寄干身份 | 干支循环可复用；宫支、土的起点和阴阳顺逆约定须明确 |
 | 六仪击刑 | 六甲所遁六仪与地支刑的传统规则 | 逐干标注，区分天盘、地盘及寄干 | 有相同六仪与宫支含义时可复用；不等同于任意两干相刑 |
 | 入墓 | 至少包含干支长生墓、古典三奇入墓、时干入墓等不同问题 | 十干十二长生墓与古典三奇墓分别可选，见下文区别 | 不得将不同含义合并成一个无来源的布尔值 |
-| 门迫 | 门五行克所在宫五行 | 依现有八门落宫计算；宫克门另称受制，本轮未输出该项 | 使用同样门宫五行关系时可复用 |
+| 门迫 | 门五行克所在宫五行 | 依现有八门落宫计算；宫克门另称受制，当前不输出该项 | 使用同样门宫五行关系时可复用 |
 | 日马 | 按日支求驿马 | 与已有时马同时存在，不改变时马或时空显示依据 | 按任意指定柱地支求马的底层映射可复用 |
 
 拆补、置闰主要解决定局问题；上述注记多以已经算好的盘与历法结果为输入，所以不应再各自计算一套节气或四柱。未来实现其他盘式时，仍需为其增加独立参考例，不能因为注记函数可复用就宣称已经支持那种盘式。
 
-## 接口与架构约定
+## 配置与结果
 
 扩展配置属于 `qimen-core`；`qimen-calendar` 不依赖这些术数注记。计算过程保持确定性，不读取当前时间、环境变量或网络。
 
@@ -36,9 +38,15 @@ Rust 可通过 `Calculator::new(ExtensionOptions::all())` 一次设置，随后�
 CLI 示例：
 
 ```sh
-qimen paipan --year 2026 --month 9 --day 18 --hour 18 --minute 15 --extensions all
-qimen paipan --year 2026 --month 9 --day 18 --hour 18 --extensions hidden-stems,day-horse --json
-qimen paipan --year 2026 --month 9 --day 18 --hour 18 --extensions tombs --tomb-rule traditional-three-wonders
+qimen paipan \
+  --year 2026 --month 9 --day 18 --hour 18 --minute 15 \
+  --extensions all
+qimen paipan \
+  --year 2026 --month 9 --day 18 --hour 18 \
+  --extensions hidden-stems,day-horse --json
+qimen paipan \
+  --year 2026 --month 9 --day 18 --hour 18 \
+  --extensions tombs --tomb-rule traditional-three-wonders
 ```
 
 JSON、MCP 工具参数使用同一 `CalculationRequest`：
@@ -74,7 +82,7 @@ JSON 中省略的扩展不计算；未知选项或规则必须报错，不能悄
 
 该分支及重干条件可直接核对维护者的 [qimen-go 实现](https://github.com/deminzhang/qimen-go/blob/4d3f58fa0f401b5b3a337f119138e99e90685dda/xuan/qimen.go#L318-L336) 和 [暗干分支](https://github.com/deminzhang/qimen-go/blob/4d3f58fa0f401b5b3a337f119138e99e90685dda/xuan/qimen.go#L517-L538)，选项含义见其 [规则定义](https://github.com/deminzhang/qimen-go/blob/4d3f58fa0f401b5b3a337f119138e99e90685dda/xuan/qimen_defs.go#L79-L85)。这是可复核的现代排盘约定，不据此断言古籍规定所有暗干只能这样排。
 
-### 流派对照：门下藏干（本轮未实现）
+### 流派对照：门下藏干（未实现）
 
 各宫当前八门携带其本位宫原有的地盘干。例如当前开门在哪一宫，该宫门下藏干就取地盘乾六的干。门本位为：休一、生八、伤三、杜四、景九、死二、惊七、开六。中五没有八门，因此没有这一法的暗干；不把中宫寄干追加为第二个暗干。
 
@@ -117,7 +125,7 @@ JSON 中省略的扩展不计算；未知选项或规则必须报错，不能悄
 | 壬 | 申 | 顺 | 辰 |
 | 癸 | 卯 | 逆 | 未 |
 
-令支按子到亥编号 `0..11`，长生起支编号为 `s`，待查支为 `b`：阳干阶段索引为 `rem_euclid(b-s, 12)`，阴干为 `rem_euclid(s-b, 12)`。戊随丙、己随丁即本轮明确采用的“土随火”，依据见[《三命通会》卷二“论天干阴阳生死”](https://zh.wikisource.org/wiki/三命通會/卷二#论天干阴阳生死)。不把其他术数中的水土同生、五行同生同死等约定混入这个算法。
+令支按子到亥编号 `0..11`，长生起支编号为 `s`，待查支为 `b`：阳干阶段索引为 `rem_euclid(b-s, 12)`，阴干为 `rem_euclid(s-b, 12)`。戊随丙、己随丁即采用的“土随火”，依据见[《三命通会》卷二“论天干阴阳生死”](https://zh.wikisource.org/wiki/三命通會/卷二#论天干阴阳生死)。不把其他术数中的水土同生、五行同生同死等约定混入这个算法。
 
 宫支映射为：坎子、坤未申、震卯、巽辰巳、乾戌亥、兑酉、艮丑寅、离午，中五无支。对一宫中的每个干分别返回各支阶段。例如丙在乾宫返回“戌：墓，亥：绝”，不是只返回一个“墓”；寄壬在乾宫另返回“戌：冠带，亥：临官”。
 
@@ -136,16 +144,16 @@ JSON 中省略的扩展不计算；未知选项或规则必须报错，不能悄
 
 依据为[《遁甲演义》“六仪击刑”](https://zh.wikisource.org/wiki/遁甲演義)：六甲所遁仪临其相刑或自刑之地。只依表检查，不将所有六仪都按其表面五行去推“刑”，也不将三奇受制混叫六仪击刑。
 
-传统叙述着重于天盘六仪落宫。本项目另外对地盘及寄干按相同位置关系给出注记，若已开启暗干也包含该盘层；各盘层身份必须保留。这使软件能展示用户截图中地盘癸落巽宫的“刑”，而不会误报为天盘癸击刑，也不会把暗干注记混成天盘判断。
+传统叙述着重于天盘六仪落宫。本项目另外对地盘及寄干按相同位置关系给出注记，若已开启暗干也包含该盘层；各盘层身份必须保留。例如地盘癸落巽宫可在其盘层下标记击刑；该结果与天盘癸或暗干癸的注记分别表达。
 
 ### 当前支持的入墓范围
 
-开启刑墓后默认使用 `GrowthStageFireEarth`，即上表十干十二长生的墓支：该干所在宫包含其墓支，即命中。也可显式选择 `TraditionalThreeWonders`，只检查古典三奇乙未、丙戌、丁丑；这一选项对六仪不适用，墓支返回空值，不能把它理解成六仪永不入墓。两种入墓规则均与是否启用十二长生的完整展示独立；单开刑墓也能计算墓支。天盘、地盘、寄干分别判断。
+开启入墓注记时默认使用 `GrowthStageFireEarth`，即上表十干十二长生的墓支：该干所在宫包含其墓支，即命中。也可显式选择 `TraditionalThreeWonders`，只检查古典三奇乙未、丙戌、丁丑；这一选项对六仪不适用，墓支返回空值，不能把它理解成六仪永不入墓。两种入墓规则均与是否启用十二长生的完整展示独立；单开入墓注记也能计算墓支。天盘、地盘、寄干分别判断。
 
 不要混淆三种问题：
 
 - **盘干临墓**：某个实际干落入包含其墓支的宫，是当前输出的逐干注记。
-- **时干自身坐墓**：例如丙戌时、壬辰时，检查的是时柱干支自身；它不是“找到任何一个墓宫就称时干入墓”。《遁甲演义》另有相关段落。本轮不单列这个全局格局。
+- **时干自身坐墓**：例如丙戌时、壬辰时，检查的是时柱干支自身；它不是“找到任何一个墓宫就称时干入墓”。《遁甲演义》另有相关段落。当前不单列这个全局格局。
 - **古典三奇入墓**：《遁甲演义》明确列乙临坤未、丙临乾戌、丁临艮丑；其中乙未和阴干十二长生的乙戌不同。`TraditionalThreeWonders` 明确选取这组三奇规则，不把乙未追加进默认十干墓表，也不宣称实现了所有三奇入墓版本。
 
 例如选择古典三奇墓并同时开启十二长生时，乙在坤二可显示“未：养”及“古典三奇墓支：未”；两者回答的是不同规则下的问题。这不是算法矛盾，消费者应展示规则名，不能把长生的“养”改成“墓”来追求文字一致。
@@ -169,48 +177,15 @@ JSON 中省略的扩展不计算；未知选项或规则必须报错，不能悄
 
 该三合驿马映射在[《三命通会》卷三“论驿马”](https://zh.wikisource.org/wiki/三命通會/卷三#论驿马)有逐组说明。日马取已经按调用者日界规则算出的日支，时马取时支；不能为了计算日马重新按另一种换日规则取日期。开启日马不更改基础盘中按时支标记的马星。
 
-## 用户截图核验例
+## 边界与兼容性
 
-来源：用户于 2026-09-18 提供的软件截图，画面时间为北京时间 `2026-09-18 18:15:00`，四柱丙午、丁酉、乙未、乙酉，时家拆补转盘、阴遁九局、甲申旬。截图用于核对可见字段，不能证明该软件所有未展示分支的取法。
-
-值使惊门落乾六，时干乙，乾六本位地盘辛，未触发重干起中宫。值使起时干法的各宫暗干应为：
-
-| 宫 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 暗干 | 壬 | 辛 | 庚 | 己 | 戊 | 乙 | 丙 | 丁 | 癸 |
-
-星门旺衰应为下表；斜线前是落宫状态，后是酉月状态：
-
-| 宫 | 星 | 星：宫／月 | 门 | 门：宫／月 |
-| --- | --- | --- | --- | --- |
-| 1 | 天柱 | 旺／相 | 开 | 休／旺 |
-| 2 | 天辅 | 休／囚 | 景 | 休／囚 |
-| 3 | 天蓬 | 旺／废 | 生 | 死／休 |
-| 4 | 天任 | 囚／旺 | 伤 | 旺／死 |
-| 6 | 天芮、天禽 | 各旺／旺 | 惊 | 旺／旺 |
-| 7 | 天英 | 休／休 | 死 | 休／休 |
-| 8 | 天心 | 废／相 | 休 | 死／相 |
-| 9 | 天冲 | 旺／囚 | 杜 | 休／死 |
-
-其他可见固定预期：
-
-- 日支未，日马巳在巽四；时支酉，时马亥在乾六，两者不同。
-- 天盘癸在坤二：未为墓，申为死；地盘丙在同宫：未为衰，申为病。
-- 天盘丙在乾六：戌为墓，亥为绝；同宫天盘寄壬：戌为冠带，亥为临官。
-- 地盘己在艮八：丑为墓，寅为死；地盘癸在巽四：辰为养，巳为胎，并在巳支命中六仪击刑。
-- 该盘没有门迫；震三生门、艮八休门属于宫克门的受制关系。
-
-截图中的数字串、宫位流转箭头、月建之外的综合判语等未在本页定义，不能凭外观猜测其含义，也不纳入扩展核验通过范围。
-
-## 独立边界用例
-
-除了截图，回归测试应能区分以下容易混淆的实现：
+回归用例覆盖下列规则边界，参考数据来源见[测试资料](../crates/qimen-core/tests/fixtures/README.md)：
 
 | 用例 | 固定预期与目的 |
 | --- | --- |
 | 阳一局甲子时，值使在 1 | 甲以戊代，地盘 1 为戊，重干起中 5；暗干 1..9 为癸丁丙乙戊己庚辛壬 |
 | 阳一局乙丑时，值使在 2 | 乙与本位己不同，起 2；暗干 1..9 为丙乙戊己庚辛壬癸丁 |
-| 阴九局乙酉时 | 采用用户截图的九宫暗干预期，检验阴遁逆飞与循环回绕 |
+| 阴九局乙酉时 | 暗干 1..9 为壬辛庚己戊乙丙丁癸，检验阴遁逆飞与循环回绕 |
 | 值使寄宫，时干等于中宫寄干但不同于本位干 | 不因寄干相等而误触发本位重干规则 |
 | 十二长生：壬申、壬子、壬辰 | 分别长生、帝旺、墓，可发现抄表偏移 |
 | 十二长生：丁酉、丁丑；戊寅、己酉 | 分别长生、墓；戊己均为长生，验证阴逆与土随火 |
@@ -225,8 +200,8 @@ JSON 中省略的扩展不计算；未知选项或规则必须报错，不能悄
 
 本页引用原典规则并自行整理公式，不复制现代注解的断语或上游生产代码。
 
-- `deminzhang/qimen-go`，提交 `4d3f58fa0f401b5b3a337f119138e99e90685dda`：[MIT，Copyright 2024 deminzhang](https://github.com/deminzhang/qimen-go/blob/4d3f58fa0f401b5b3a337f119138e99e90685dda/LICENSE)。核阅暗干的两个独立起法、遁甲替代与重干分支，不照抄其其他表格。
-- `3metaJun/3meta`，提交 `9be1238cbb7b0118826a689f9d3f8100284f6df3`：[MIT，Copyright 2025 3metaJun](https://github.com/3metaJun/3meta/blob/9be1238cbb7b0118826a689f9d3f8100284f6df3/LICENSE)。[暗干实现](https://github.com/3metaJun/3meta/blob/9be1238cbb7b0118826a689f9d3f8100284f6df3/src/qimen/calculator.ts)另以甲时、中宫干、值符值使同宫作分支；不能假设它与本项目重干法在所有寄宫案例都一致。其[常量](https://github.com/3metaJun/3meta/blob/9be1238cbb7b0118826a689f9d3f8100284f6df3/src/data/constants.ts)把亥卯未驿马列为申，与上述原典和用户截图的巳不符；其[长生表](https://github.com/3metaJun/3meta/blob/9be1238cbb7b0118826a689f9d3f8100284f6df3/src/analysis/index.ts)中壬的多个支也与所选阳顺规则不符。因此只作差异研究，不把该软件的完整输出当作正确答案。
+- `deminzhang/qimen-go`，提交 `4d3f58fa0f401b5b3a337f119138e99e90685dda`：[MIT，Copyright 2024 deminzhang](https://github.com/deminzhang/qimen-go/blob/4d3f58fa0f401b5b3a337f119138e99e90685dda/LICENSE)。参考范围为暗干的两个独立起法、遁甲替代与重干分支。
+- `3metaJun/3meta`，提交 `9be1238cbb7b0118826a689f9d3f8100284f6df3`：[MIT，Copyright 2025 3metaJun](https://github.com/3metaJun/3meta/blob/9be1238cbb7b0118826a689f9d3f8100284f6df3/LICENSE)。[暗干实现](https://github.com/3metaJun/3meta/blob/9be1238cbb7b0118826a689f9d3f8100284f6df3/src/qimen/calculator.ts)另以甲时、中宫干、值符值使同宫作分支；不能假设它与本项目重干法在所有寄宫案例都一致。其[常量](https://github.com/3metaJun/3meta/blob/9be1238cbb7b0118826a689f9d3f8100284f6df3/src/data/constants.ts)把亥卯未驿马列为申，与上述原典的巳不符；其[长生表](https://github.com/3metaJun/3meta/blob/9be1238cbb7b0118826a689f9d3f8100284f6df3/src/analysis/index.ts)中壬的多个支也与所选阳顺规则不符。因此只作差异研究，不把该软件的完整输出当作正确答案。
 
 ## English summary
 
@@ -236,4 +211,4 @@ The implemented hidden-stem convention flies the effective hour stem from the du
 
 Star strength follows the Yanbo convention; door and stem strength use ordinary Five-Phase relations. Palace and solar-month contexts are reported separately. The twelve growth stages use yang-forward/yin-backward traversal, with Wu following Bing and Ji following Ding. Tomb annotations default to that same ten-stem rule. An explicit `TraditionalThreeWonders` option instead uses Yi at Wei, Bing at Xu and Ding at Chou; other stems return no applicable tomb branch under that rule. It is never silently combined with Yi's growth-stage tomb at Xu, and does not alter the separate growth-stage calculation. Instrument punishment and door pressure retain their exact direction and plate identity. The day horse uses the computed day branch, while the existing hour horse continues to use the hour branch.
 
-The screenshot fixture is `2026-09-18 18:15:00 +08:00`. It verifies the visible hidden stems, star/door strength, selected growth/tomb/punishment entries and the distinct day/hour horses. It does not validate every school convention or proprietary annotation shown by that application. Future chart methods require their own fixtures before support is claimed.
+Regression tests cover numeric flight, Jia substitution, hosted-stem identity, growth-stage traversal, tomb-rule applicability and day boundaries. Reference inputs and field mappings are maintained alongside the tests. Additional chart methods require their own applicability rules and reference cases.

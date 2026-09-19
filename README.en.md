@@ -1,12 +1,41 @@
 # qimen-rs
 
-[简体中文](README.md) · [Algorithm sources](docs/algorithm-sources.md) · [Agent guide](AGENTS.md) · [Releasing](docs/releasing.md)
+[简体中文](README.md) · [Algorithm sources](docs/algorithm-sources.md) · [Contributing](CONTRIBUTING.md) · [Releasing](docs/releasing.md)
 
-A Rust library for Four Pillars (BaZi) and Qimen Dunjia charts from Gregorian dates and civil times. The initial implementation uses **hour-based Qimen, Chai Bu (拆补), rotating plates (转盘), fixed center-to-Kun hosting, and Tian Qin accompanying Tian Rui**.
+A Rust library for Four Pillars (BaZi) and Qimen Dunjia charts from Gregorian dates and civil times. The default method uses **hour-based Qimen, Chai Bu (拆补), rotating plates (转盘), fixed center-to-Kun hosting, and Tian Qin accompanying Tian Rui**.
 
 The computation is offline. CLI, MCP, Python, Node.js, and WebAssembly all call the same Rust libraries.
 
+- **Calendar:** lunar dates, Four Pillars, solar-term instants and configurable day boundaries.
+- **Base chart:** Dun, Yuan, Ju, duty star and door, nine palaces, voids and the hour horse.
+- **Optional annotations:** hidden stems, strength, growth stages, punishments, tombs, the day horse and door pressure.
+- **Interfaces:** typed Rust APIs, versioned JSON, language bindings, CLI and MCP.
+
 ## Architecture
+
+```mermaid
+flowchart TB
+    subgraph Apps["Applications"]
+        CLI["CLI"]
+        MCP["MCP"]
+    end
+    subgraph Bindings["Bindings"]
+        Python["Python"]
+        Node["Node.js"]
+        WASM["WASM"]
+    end
+    CLI --> Core
+    MCP --> Core
+    Python --> Core
+    Node --> Core
+    WASM --> Core
+    Core["`qimen-core
+Charts and annotations`"] --> Calendar["`qimen-calendar
+Calendar and Four Pillars`"]
+    Calendar --> Tyme["tyme4rs"]
+```
+
+Arrows point from callers to their dependencies.
 
 | Component | Responsibility |
 | --- | --- |
@@ -22,7 +51,7 @@ Dependencies flow from applications and bindings into the core, then into the ca
 
 ## Getting started
 
-Use Rust stable with edition 2024. Until registry packages are published, build from source:
+The workspace uses Rust edition 2024 and requires Rust 1.94 or newer. Build from source:
 
 ```bash
 git clone https://github.com/SpenserCai/qimen-rs.git
@@ -32,12 +61,16 @@ cargo run -p qimen-cli -- paipan --year 2026 --month 9 --day 18 --hour 15 --json
 cargo run -p qimen-cli -- bazi --year 2026 --month 9 --day 18 --hour 15
 ```
 
+### Rust
+
 ```rust
 use qimen_core::{ChartRequest, calculate};
 
-let chart = calculate(&ChartRequest::new(2026, 9, 18, 15))?;
-println!("{}", serde_json::to_string_pretty(&chart)?);
-# Ok::<(), Box<dyn std::error::Error>>(())
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let chart = calculate(&ChartRequest::new(2026, 9, 18, 15))?;
+    println!("{}", serde_json::to_string_pretty(&chart)?);
+    Ok(())
+}
 ```
 
 Canonical contracts: [request schema](docs/schema/request.schema.json), [chart schema](docs/schema/chart.schema.json), and [complete example](docs/examples/2026-09-18T150000+0800.json).
@@ -45,12 +78,21 @@ Canonical contracts: [request schema](docs/schema/request.schema.json), [chart s
 The common JSON request is:
 
 ```json
-{"year":2026,"month":9,"day":18,"hour":15,"minute":0,"second":0,"utc_offset_minutes":480,"day_boundary":"zi_start"}
+{
+  "year": 2026,
+  "month": 9,
+  "day": 18,
+  "hour": 15,
+  "minute": 0,
+  "second": 0,
+  "utc_offset_minutes": 480,
+  "day_boundary": "zi_start"
+}
 ```
 
 Minutes and seconds default to zero, the fixed UTC offset to +480 minutes, and the day boundary to 23:00. Unknown fields and invalid dates are rejected. Output includes a schema version; JSON property order is not an API contract.
 
-## Optional annotations
+### Optional annotations
 
 Hidden stems, strengths, twelve growth stages, six-instrument punishments, tombs, the day horse and door pressure are **disabled by default**. These are common annotations with school-dependent conventions, not one universal algorithm. See [rules, scope and sources](docs/extensions.md).
 
@@ -59,33 +101,55 @@ Configure a reusable Rust calculator at initialization, or use `calculate_with_o
 ```rust
 use qimen_core::{Calculator, ChartRequest, DayHorseRule, ExtensionOptions};
 
-let calculator = Calculator::new(ExtensionOptions {
-    day_horse: Some(DayHorseRule::DayBranchThreeHarmony),
-    ..Default::default()
-});
-let chart = calculator.calculate(&ChartRequest::new(2026, 9, 18, 18))?;
-assert!(chart.extensions.is_some());
-# Ok::<(), qimen_core::Error>(())
+fn main() -> Result<(), qimen_core::Error> {
+    let calculator = Calculator::new(ExtensionOptions {
+        day_horse: Some(DayHorseRule::DayBranchThreeHarmony),
+        ..Default::default()
+    });
+    let chart = calculator.calculate(&ChartRequest::new(2026, 9, 18, 18))?;
+    assert!(chart.extensions.is_some());
+    Ok(())
+}
 ```
 
 `ExtensionOptions::all()` explicitly enables all implemented annotations. Its tomb preset uses yang-forward/yin-reverse growth stages with earth following fire; the separate traditional three-wonders rule applies only to Yi, Bing and Ding.
 
 ```bash
-cargo run -p qimen-cli -- paipan --year 2026 --month 9 --day 18 --hour 18 --minute 15 --extensions all
-cargo run -p qimen-cli -- paipan --year 2026 --month 9 --day 18 --hour 18 --extensions day-horse,hidden-stems --json
+cargo run -p qimen-cli -- paipan \
+  --year 2026 --month 9 --day 18 --hour 18 --minute 15 \
+  --extensions all
+cargo run -p qimen-cli -- paipan \
+  --year 2026 --month 9 --day 18 --hour 18 \
+  --extensions day-horse,hidden-stems --json
 ```
 
 MCP `paipan`, Python, Node.js and WASM share the same request parameter:
 
 ```json
-{"year":2026,"month":9,"day":18,"hour":18,"minute":15,"extensions":{"day_horse":"day_branch_three_harmony","hidden_stems":"duty_door_hour_stem_with_center_fallback"}}
+{
+  "year": 2026,
+  "month": 9,
+  "day": 18,
+  "hour": 18,
+  "minute": 15,
+  "extensions": {
+    "day_horse": "day_branch_three_harmony",
+    "hidden_stems": "duty_door_hour_stem_with_center_fallback"
+  }
+}
 ```
 
 Results appear in `chart.extensions` with their named rules. They leave the calendar, base plates and hour horse unchanged; the field is omitted when disabled. `bazi` remains calendar-only and rejects Qimen options. Schema **1.1** adds optional annotation input/output to 1.0; existing civil requests remain valid and Rust still decodes 1.0 charts without extensions.
 
-See [Python](bindings/python/README.md), [Node.js](bindings/node/README.md), and [WebAssembly](bindings/wasm/README.md) for binding build instructions and examples.
+### Python / Node.js / WebAssembly
 
-## MCP
+Bindings provide native objects and JSON interfaces. See the language guides for build instructions and examples:
+
+- [Python](bindings/python/README.md)
+- [Node.js / TypeScript](bindings/node/README.md)
+- [WebAssembly](bindings/wasm/README.md)
+
+### MCP
 
 ```bash
 cargo build --release -p qimen-mcp
@@ -95,10 +159,17 @@ cargo build --release -p qimen-mcp
 Example client configuration (replace the executable path):
 
 ```json
-{"mcpServers":{"qimen":{"command":"/absolute/path/to/qimen-mcp","args":[]}}}
+{
+  "mcpServers": {
+    "qimen": {
+      "command": "/absolute/path/to/qimen-mcp",
+      "args": []
+    }
+  }
+}
 ```
 
-The server exposes calendar/BaZi and complete-chart tools. The SDK handles the **2026-07-28 lifecycle** and legacy initialization. Protocol compatibility is integration-tested. Standard output is reserved for MCP messages.
+The server exposes calendar/BaZi and complete-chart tools. The SDK handles the **2026-07-28 lifecycle** and legacy initialization. Standard output is reserved for MCP messages; diagnostics use standard error.
 
 ## Calculation contract
 
@@ -118,7 +189,7 @@ The server exposes calendar/BaZi and complete-chart tools. The SDK handles the *
 | Duty door | Fly from the original xun-head palace before applying center hosting |
 | Void / horse | Hour-pillar xun void and traveling horse markers |
 
-Other programs may use different schools, hosting rules, apparent solar time or day boundaries. Match those settings before comparing outputs. Other schools are not currently advertised as implemented.
+Supported chart construction is limited to the method listed above. Comparisons require matching Ju selection, hosting, day-boundary and civil/solar-time conventions.
 
 Second-resolution solar-term timestamps reflect the calculation's output resolution, not guaranteed one-second agreement with every astronomical almanac. Record dependency versions and boundary times when investigating near-boundary differences.
 
@@ -128,15 +199,20 @@ The shared result includes the request and conventions, lunar date, Four Pillars
 
 Interpretation and predictions are outside the foundational chart data model.
 
-## Quality and maintenance
+## Development and documentation
 
-CI checks formatting, warning-free compilation and Clippy, tests and documentation on Linux, macOS and Windows, plus native binding and WASM smoke tests. Tests live in separate files: public behavior in `tests/`, private unit tests in separate test modules when needed. Inline unit tests are also valid Rust; separation is this project's maintainability choice.
+Quality gates cover formatting, warning-free compilation, Clippy, rustdoc, schema consistency and tests. CI runs on Linux, macOS and Windows and exercises native bindings and WebAssembly. Public API tests live in each crate's `tests/` directory.
 
-Calendar fixtures, worked chart cases, structural invariants and adapter integration tests serve different purposes. Passing invariants alone is not independent proof of every chart. See [sources and verification limits](docs/algorithm-sources.md) and [validation evidence](docs/validation.md).
+| Guide | Contents |
+| --- | --- |
+| [Algorithm sources](docs/algorithm-sources.md) | Base-chart rules, formulas and reference implementations |
+| [Optional annotations](docs/extensions.md) | Configuration, named rules and applicability |
+| [Testing guide](docs/validation.md) | Test coverage, reproduction commands and verification limits |
+| [Contributing](CONTRIBUTING.md) | Development setup, calculation reports and pull requests |
+| [Release guide](docs/releasing.md) | Platforms, registry credentials and version tags |
+| [Maintenance contract](AGENTS.md) | Module boundaries, compatibility and quality requirements |
 
-For comparisons, provide the complete Gregorian timestamp, offset, rollover/solar-time/hosting settings and all nine palaces. Confirmed external cases should become permanent regression fixtures.
-
-Registry publishing is separate from normal CI. Configure credentials and follow the [release guide](docs/releasing.md). Initial implementation does not automatically publish or reserve package names.
+Detailed guides are maintained in Chinese; this README provides the English overview and API examples. Package publishing is controlled by version tags and separate registry switches, as described in the release guide.
 
 ## License
 

@@ -1,13 +1,20 @@
 # qimen-rs Node.js 绑定
 
+[中文首页](../../README.md) · [English](../../README.en.md) · [扩展规则](../../docs/extensions.md)
+
 基于 napi-rs / Node-API 8，支持 Node.js 20+。提供 CommonJS、ESM 和 TypeScript 声明。
 排盘算法、日期校验、默认值和 JSON schema 均来自 Rust 核心。
+
+## 快速开始
 
 ```typescript
 import { calculate } from '@spensercai/qimen-rs';
 
 const chart = calculate({
-  year: 2024, month: 2, day: 10, hour: 12,
+  year: 2024,
+  month: 2,
+  day: 10,
+  hour: 12,
   utc_offset_minutes: 480,
   day_boundary: 'zi_start',
 });
@@ -20,6 +27,8 @@ CommonJS 使用 `const { calculate } = require('@spensercai/qimen-rs')`。
 日期参数是当地民用时间，不是 JavaScript `Date`；未提供 UTC 偏移时固定采用 +08:00。
 无效日期或未知字段抛出 `Error`，`error.code === 'InvalidArg'`。计算为同步调用；
 大量批处理可在 Node Worker 中运行。
+
+## 可选扩展
 
 扩展标注默认关闭，使用请求的 `extensions` 参数选择需要的规则：
 
@@ -45,17 +54,14 @@ console.log(chart.extensions?.day_horse?.horse);
 全部选项和结果有 TypeScript 类型，JSON schema 版本为 `1.1`。
 完整规则与适用范围见 [扩展约定](../../docs/extensions.md)。
 
-Optional annotations are disabled by default. Select explicit rules in the
-request's `extensions` object; unknown names or conventions throw `InvalidArg`.
-Each result preserves its rule and stem provenance. Missing annotations were not
-requested; null tomb results mean that the selected convention does not apply.
+## 开发与构建
 
-源码构建：
+在仓库根目录执行：
 
 ```bash
 cd bindings/node
-npm install
-npm run build
+npm ci --ignore-scripts
+npm run build -- -- --locked
 npm test
 ```
 
@@ -64,15 +70,6 @@ Linux x64 预构建包要求 glibc >= 2.35，arm64 要求 glibc >= 2.39；其他
 浏览器 Wasm 包或源码构建。每个平台二进制作为 npm optional dependency 安装。
 尚未发布的版本请使用源码或 CI 产物。
 
-发布收集流程（在 CI 已完成各平台构建和测试后）：
+## 发布
 
-```bash
-npm run create-npm-dirs
-npm run artifacts
-npm run prepublish:native
-npm publish --access public --ignore-scripts
-```
-
-`artifacts/` 内放置 CI 下载的 `qimen.<platform>.node`，同时恢复生成的 `native.cjs`。
-`prepublish:native` 会先检查每个目标文件，再发布平台分包并更新主包的 optionalDependencies。
-它只在显式发行任务中调用，不绑定 `npm install` 或 `npm pack` 的生命周期。
+发行流程在完整收集平台产物后，先发布原生分包，再发布主包。`prepublish:native` 仅用于显式发行任务，不绑定安装或打包生命周期。凭据、发布开关与故障恢复见[发布指南](../../docs/releasing.md)。
