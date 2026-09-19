@@ -22,6 +22,7 @@ test('invalid dates, unknown fields and fractions are rejected by Rust', () => {
     { ...request, day: 30 }, { ...request, typo: 1 },
     { ...request, hour: 1.5 }, { ...request, hour: true },
     { ...request, hour: Number.NaN }, { ...request, hour: Infinity },
+    { ...request, day_boundary: { zi_start: null } },
   ]) {
     assert.throws(() => calculate(invalid), { code: 'InvalidArg' });
   }

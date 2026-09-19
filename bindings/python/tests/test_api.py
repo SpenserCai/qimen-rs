@@ -26,6 +26,10 @@ class ChartApiTests(unittest.TestCase):
             with self.subTest(payload=payload), self.assertRaises(ValueError):
                 calculate_json(payload)
 
+    def test_day_boundary_requires_a_string_convention(self):
+        with self.assertRaises(ValueError):
+            calculate({**self.request, "day_boundary": {"zi_start": None}})
+
     def test_non_mapping_and_non_string_keys_are_rejected(self):
         for request in [[], None, {1: 2024}]:
             with self.subTest(request=request), self.assertRaises(TypeError):

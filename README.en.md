@@ -50,6 +50,39 @@ The common JSON request is:
 
 Minutes and seconds default to zero, the fixed UTC offset to +480 minutes, and the day boundary to 23:00. Unknown fields and invalid dates are rejected. Output includes a schema version; JSON property order is not an API contract.
 
+## Optional annotations
+
+Hidden stems, strengths, twelve growth stages, six-instrument punishments, tombs, the day horse and door pressure are **disabled by default**. These are common annotations with school-dependent conventions, not one universal algorithm. See [rules, scope and sources](docs/extensions.md).
+
+Configure a reusable Rust calculator at initialization, or use `calculate_with_options` per call:
+
+```rust
+use qimen_core::{Calculator, ChartRequest, DayHorseRule, ExtensionOptions};
+
+let calculator = Calculator::new(ExtensionOptions {
+    day_horse: Some(DayHorseRule::DayBranchThreeHarmony),
+    ..Default::default()
+});
+let chart = calculator.calculate(&ChartRequest::new(2026, 9, 18, 18))?;
+assert!(chart.extensions.is_some());
+# Ok::<(), qimen_core::Error>(())
+```
+
+`ExtensionOptions::all()` explicitly enables all implemented annotations. Its tomb preset uses yang-forward/yin-reverse growth stages with earth following fire; the separate traditional three-wonders rule applies only to Yi, Bing and Ding.
+
+```bash
+cargo run -p qimen-cli -- paipan --year 2026 --month 9 --day 18 --hour 18 --minute 15 --extensions all
+cargo run -p qimen-cli -- paipan --year 2026 --month 9 --day 18 --hour 18 --extensions day-horse,hidden-stems --json
+```
+
+MCP `paipan`, Python, Node.js and WASM share the same request parameter:
+
+```json
+{"year":2026,"month":9,"day":18,"hour":18,"minute":15,"extensions":{"day_horse":"day_branch_three_harmony","hidden_stems":"duty_door_hour_stem_with_center_fallback"}}
+```
+
+Results appear in `chart.extensions` with their named rules. They leave the calendar, base plates and hour horse unchanged; the field is omitted when disabled. `bazi` remains calendar-only and rejects Qimen options. Schema **1.1** adds optional annotation input/output to 1.0; existing civil requests remain valid and Rust still decodes 1.0 charts without extensions.
+
 See [Python](bindings/python/README.md), [Node.js](bindings/node/README.md), and [WebAssembly](bindings/wasm/README.md) for binding build instructions and examples.
 
 ## MCP

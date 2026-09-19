@@ -64,6 +64,39 @@ JSON 入口也接受同样的请求：
 
 未知字段、无效日期和不支持的参数应显式报错，不能悄悄回退到另一种排盘口径。结果携带 schema 版本；调用者不应依赖 JSON 属性的排列顺序。
 
+### 可选扩展
+
+暗干、旺衰、十二长生、六仪击刑、入墓、日马及门迫均由核心统一计算，**默认关闭**。它们是常见辅助规则，但流派之间并非只有一种算法；适用范围、公式和出处见 [扩展规则](docs/extensions.md)。
+
+Rust 可以在计算器初始化时选择规则，也可以使用 `calculate_with_options` 为单次计算传参：
+
+```rust
+use qimen_core::{Calculator, ChartRequest, DayHorseRule, ExtensionOptions};
+
+let calculator = Calculator::new(ExtensionOptions {
+    day_horse: Some(DayHorseRule::DayBranchThreeHarmony),
+    ..Default::default()
+});
+let chart = calculator.calculate(&ChartRequest::new(2026, 9, 18, 18))?;
+assert!(chart.extensions.is_some());
+# Ok::<(), qimen_core::Error>(())
+```
+
+`ExtensionOptions::all()` 显式启用所有已实现扩展；入墓默认采用阴阳顺逆、土随火的十二长生墓位，另可选择仅适用于乙丙丁的古典三奇入墓规则。
+
+```bash
+cargo run -p qimen-cli -- paipan --year 2026 --month 9 --day 18 --hour 18 --minute 15 --extensions all
+cargo run -p qimen-cli -- paipan --year 2026 --month 9 --day 18 --hour 18 --extensions day-horse,hidden-stems --json
+```
+
+MCP 的 `paipan` 与 Python、Node.js、WASM 请求使用相同的 `extensions` 参数：
+
+```json
+{"year":2026,"month":9,"day":18,"hour":18,"minute":15,"extensions":{"day_horse":"day_branch_three_harmony","hidden_stems":"duty_door_hour_stem_with_center_fallback"}}
+```
+
+扩展结果写入 `chart.extensions` 并携带选用规则，不改变四柱、基础九宫或时马；未启用时不输出该字段。`bazi` 仅处理历法，不接受奇门扩展。Schema **1.1** 在 1.0 基础上增加此可选输入/输出，原有日期请求仍然有效，Rust 仍可读取不含扩展的 1.0 结果。
+
 ### Python / Node.js / WebAssembly
 
 绑定提供原生对象和 JSON 两种接口。安装、构建和语言示例见各目录：

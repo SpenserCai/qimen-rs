@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "CalendarRequest",
-  "description": "Gregorian input and explicit calculation conventions.\n\nMissing JSON `minute` and `second` default to zero, `utc_offset_minutes` to\n480 (UTC+08:00), and `day_boundary` to `zi_start`. Unknown fields are rejected\nso a misspelled convention cannot silently change the result.",
+  "title": "CalculationRequest",
+  "description": "The shared JSON/MCP request: civil fields plus optional `extensions`.\n\nCivil fields retain their original flat JSON layout. Rust stores them in the\nindependent calendar request, avoiding a second copy of its validation rules.\nUnknown civil fields, extension names, and rule values are rejected.",
   "type": "object",
   "properties": {
     "day": {
@@ -14,6 +14,10 @@
       "description": "Day-pillar rollover convention.",
       "$ref": "#/$defs/DayBoundary",
       "default": "zi_start"
+    },
+    "extensions": {
+      "description": "Optional annotations, all disabled when omitted or empty.",
+      "$ref": "#/$defs/ExtensionOptions"
     },
     "hour": {
       "description": "Local civil hour, 0–23.",
@@ -73,6 +77,165 @@
           "description": "Change the day pillar at 00:00. The 23:00 子 hour still uses the following\nday's stem for its hour pillar, preserving one pillar across 子时.",
           "type": "string",
           "const": "midnight"
+        }
+      ]
+    },
+    "DayHorseRule": {
+      "description": "Supported day-horse conventions.",
+      "oneOf": [
+        {
+          "description": "申子辰→寅、寅午戌→申、亥卯未→巳、巳酉丑→亥, using the\ncalculated day pillar and therefore the request's day-boundary rule.",
+          "type": "string",
+          "const": "day_branch_three_harmony"
+        }
+      ]
+    },
+    "DoorPressureRule": {
+      "description": "Supported door-pressure conventions.",
+      "oneOf": [
+        {
+          "description": "Door element controls palace element; the reverse is not 门迫.",
+          "type": "string",
+          "const": "door_controls_palace"
+        }
+      ]
+    },
+    "ExtensionOptions": {
+      "description": "The optional annotations to calculate after constructing a base chart.\n\nEvery field defaults to disabled. Each selected rule is copied into the\noutput, so a caller can distinguish school conventions from chart facts.",
+      "type": "object",
+      "properties": {
+        "day_horse": {
+          "description": "Day-pillar travelling horse, independent of the base chart's hour horse.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DayHorseRule"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "door_pressure": {
+          "description": "门迫: a door's element controls its destination palace's element.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DoorPressureRule"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "growth_stages": {
+          "description": "十二长生 for every stem and every branch in its palace.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GrowthRule"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "hidden_stems": {
+          "description": "暗干: fly the hour stem from the duty-door palace.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HiddenStemRule"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "punishments": {
+          "description": "六仪击刑, preserving heavenly/earthly and hosted-stem identities.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PunishmentRule"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "strength": {
+          "description": "星、门、干旺衰, evaluated against both the palace and solar month.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StrengthRule"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tombs": {
+          "description": "天干入墓 under the explicitly selected convention.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TombRule"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "GrowthRule": {
+      "description": "Supported twelve-stage growth conventions.",
+      "oneOf": [
+        {
+          "description": "Yang stems progress forward, yin stems backward; 戊 follows 丙 and\n己 follows 丁. Every branch in a double-branch palace remains separate.",
+          "type": "string",
+          "const": "yang_forward_yin_reverse_fire_earth"
+        }
+      ]
+    },
+    "HiddenStemRule": {
+      "description": "Supported 暗干 construction conventions.",
+      "oneOf": [
+        {
+          "description": "Put the hour stem at the duty door, then fly the nine instruments in\nnumeric palace order (yang forward, yin backward). If it repeats that\npalace's earth stem, start at palace five. 甲 uses its hidden instrument.",
+          "type": "string",
+          "const": "duty_door_hour_stem_with_center_fallback"
+        }
+      ]
+    },
+    "PunishmentRule": {
+      "description": "Supported 六仪击刑 conventions.",
+      "oneOf": [
+        {
+          "description": "戊/己/庚/辛/壬/癸 at 卯/未/寅/午/辰/巳 respectively.\nHeavenly-plate instruments are the traditional primary application;\nearthly and hidden plates are separately identified geometric annotations.",
+          "type": "string",
+          "const": "six_instrument_branches"
+        }
+      ]
+    },
+    "StrengthRule": {
+      "description": "Supported element-strength conventions.",
+      "oneOf": [
+        {
+          "description": "Stars use 生我为废、我生为旺、同我为相、我克为休、克我为囚.\nDoors/stems use ordinary 旺相休囚死. Both evaluate the palace element\nand the element of the solar-month pillar's branch (not lunar month).",
+          "type": "string",
+          "const": "classical_stars_and_five_elements"
+        }
+      ]
+    },
+    "TombRule": {
+      "description": "Supported stem-tomb conventions; these must not be conflated.",
+      "oneOf": [
+        {
+          "description": "Use 墓 in the yang-forward/yin-reverse twelve stages, with earth\nfollowing fire. In this convention 乙's tomb is 戌, not 未.",
+          "type": "string",
+          "const": "growth_stage_fire_earth"
+        },
+        {
+          "description": "Classical 三奇入墓 only: 乙→未、丙→戌、丁→丑. Other stems\nare explicitly not applicable; this does not supply a six-instrument rule.",
+          "type": "string",
+          "const": "traditional_three_wonders"
         }
       ]
     }

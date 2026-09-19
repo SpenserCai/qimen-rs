@@ -4,7 +4,7 @@ use thiserror::Error;
 use crate::Cycle;
 
 /// Civil-clock convention for the day pillar.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum DayBoundary {
@@ -14,6 +14,21 @@ pub enum DayBoundary {
     /// Change the day pillar at 00:00. The 23:00 子 hour still uses the following
     /// day's stem for its hour pillar, preserving one pillar across 子时.
     Midnight,
+}
+
+impl<'de> Deserialize<'de> for DayBoundary {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        // The public schema uses a string enum, not Serde's alternative
+        // single-key map representation for externally tagged unit variants.
+        match String::deserialize(deserializer)?.as_str() {
+            "zi_start" => Ok(Self::ZiStart),
+            "midnight" => Ok(Self::Midnight),
+            value => Err(serde::de::Error::unknown_variant(
+                value,
+                &["zi_start", "midnight"],
+            )),
+        }
+    }
 }
 
 const fn default_offset() -> i32 {

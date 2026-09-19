@@ -91,6 +91,82 @@ async fn exercise(version: ProtocolVersion, modern: bool) -> TestResult {
             .is_some()
     );
 
+    let extended_arguments = json!({
+        "year": 2024, "month": 2, "day": 10, "hour": 12,
+        "extensions": qimen_core::ExtensionOptions::all(),
+    });
+    let extended = client
+        .call_tool(call("paipan", extended_arguments.clone()))
+        .await?;
+    assert_eq!(extended.is_error, Some(false));
+    assert_eq!(
+        extended.structured_content,
+        Some(serde_json::to_value(qimen_core::calculate_with_options(
+            &request,
+            &qimen_core::ExtensionOptions::all(),
+        )?)?)
+    );
+
+    let only_horse = client
+        .call_tool(call(
+            "paipan",
+            json!({
+                "year": 2024, "month": 2, "day": 10, "hour": 12,
+                "extensions": {"day_horse": "day_branch_three_harmony"},
+            }),
+        ))
+        .await?;
+    let content = only_horse.structured_content.expect("structured chart");
+    let annotations = content["extensions"].as_object().expect("annotations");
+    assert_eq!(annotations.len(), 1);
+    assert!(annotations.contains_key("day_horse"));
+
+    let alternative_tombs = client
+        .call_tool(call(
+            "paipan",
+            json!({
+                "year": 2024, "month": 2, "day": 10, "hour": 12,
+                "extensions": {"tombs": "traditional_three_wonders"},
+            }),
+        ))
+        .await?;
+    let content = alternative_tombs
+        .structured_content
+        .expect("structured chart");
+    assert_eq!(
+        content["extensions"]["tombs"]["rule"],
+        "traditional_three_wonders"
+    );
+
+    for (name, invalid_arguments) in [
+        ("bazi", extended_arguments),
+        (
+            "paipan",
+            json!({"year": 2024, "month": 2, "day": 10, "hour": 12, "extension": {}}),
+        ),
+        (
+            "paipan",
+            json!({"year": 2024, "month": 2, "day": 10, "hour": 12,
+                "extensions": {"unknown": true}}),
+        ),
+        (
+            "paipan",
+            json!({"year": 2024, "month": 2, "day": 10, "hour": 12,
+                "extensions": {"day_horse": "unknown_rule"}}),
+        ),
+        (
+            "paipan",
+            json!({"year": 2024, "month": 2, "day": 10, "hour": 12,
+                "extensions": {"day_horse": true}}),
+        ),
+    ] {
+        let invalid = client.call_tool(call(name, invalid_arguments)).await;
+        assert!(matches!(
+            invalid,
+            Err(ServiceError::McpError(error)) if error.code == ErrorCode::INVALID_PARAMS
+        ));
+    }
+
     let invalid_date = client
         .call_tool(call(
             "paipan",
@@ -149,6 +225,25 @@ fn tool_schemas_and_capabilities_describe_read_only_local_calculations() {
         assert_eq!(schema["additionalProperties"], false);
         assert!(schema["properties"].get("utc_offset_minutes").is_some());
         assert!(schema["properties"].get("day_boundary").is_some());
+        assert_eq!(
+            schema["properties"].get("extensions").is_some(),
+            name == "paipan"
+        );
+        if name == "paipan" {
+            let schema_text = schema.to_string();
+            for rule in [
+                "duty_door_hour_stem_with_center_fallback",
+                "classical_stars_and_five_elements",
+                "yang_forward_yin_reverse_fire_earth",
+                "six_instrument_branches",
+                "growth_stage_fire_earth",
+                "traditional_three_wonders",
+                "day_branch_three_harmony",
+                "door_controls_palace",
+            ] {
+                assert!(schema_text.contains(rule), "missing rule {rule}");
+            }
+        }
         let annotations = tool.annotations.expect("explicit tool behavior");
         assert_eq!(annotations.read_only_hint, Some(true));
         assert_eq!(annotations.open_world_hint, Some(false));

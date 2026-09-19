@@ -88,7 +88,7 @@ pub struct Leaders {
     pub door_raw_palace: u8,
 }
 
-/// The hour-branch travelling horse.
+/// A travelling horse; its containing field identifies the source pillar.
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Horse {
@@ -172,6 +172,10 @@ pub struct Chart {
     pub pillar_voids: PillarVoids,
     /// The nine palaces, always in numeric Luo Shu order, one through nine.
     pub palaces: [Palace; 9],
+    /// Opt-in annotations and their named calculation rules; absent by default.
+    /// These never alter the base calendar or rotating plates.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub extensions: Option<crate::ChartExtensions>,
 }
 
 impl Chart {

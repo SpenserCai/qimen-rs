@@ -23,6 +23,8 @@
 
 核心库保持确定性：不读取系统当前时间、环境时区、网络或用户配置文件；调用者显式提供输入。库错误使用类型，CLI / MCP / 语言绑定负责映射。不要在 library 中退出进程或向 stdout 写日志。MCP stdout 仅可输出协议消息。
 
+可选注解集中于 `qimen-core::extensions`，由 `ExtensionOptions` 显式启用，默认全关；初始化配置使用 `Calculator`，跨语言请求使用 `CalculationRequest`。历法层不接收奇门扩展配置，应用不复制注解公式。每项结果必须记录规则，不能把古典三奇入墓和阴阳顺逆长生墓混为一谈。基础盘不随注解开关改变；新盘式复用注解前应逐项核验适用条件，规则来源集中在 `docs/extensions.md`。
+
 ## Rust 与接口约束
 
 - 统一 Rust **edition 2024**、workspace 版本和 lint；最低编译器见根 `Cargo.toml`，工具链见 `rust-toolchain.toml`。

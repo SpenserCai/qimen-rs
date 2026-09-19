@@ -25,6 +25,35 @@ console.log(chart.palaces);
 `calculateJson(requestJson)` 接受并返回 JSON 字符串；无效请求抛出 JavaScript `Error`。
 请求时间是民用时间，默认 UTC+08:00、23:00 换日，不读取浏览器时区。
 
+扩展标注使用与 Node / Rust JSON 接口相同的可选 `extensions` 参数：
+
+```javascript
+const annotated = calculate({
+  year: 2026, month: 9, day: 18, hour: 18,
+  extensions: {
+    hidden_stems: 'duty_door_hour_stem_with_center_fallback',
+    strength: 'classical_stars_and_five_elements',
+    growth_stages: 'yang_forward_yin_reverse_fire_earth',
+    punishments: 'six_instrument_branches',
+    tombs: 'growth_stage_fire_earth',
+    day_horse: 'day_branch_three_harmony',
+    door_pressure: 'door_controls_palace',
+  },
+});
+console.log(annotated.extensions.day_horse.horse);
+```
+
+所有项目默认关闭，可只选择需要的项目。每项结果携带实际 `rule`；寄干保留来源、盘层，
+日马与时马分别返回。`tombs` 可改选 `traditional_three_wonders`，不适用的六仪结果为
+`null`。所有扩展参数、结果的 TypeScript 类型包含在生成包中，schema 版本为 `1.1`。
+对象入口和 JSON 入口均由 Rust 严格校验未知字段、错误规则和参数类型。
+完整规则与适用范围见 [扩展约定](../../docs/extensions.md)。
+
+Optional annotations are disabled by default. Select explicit conventions with
+the request's `extensions` object. Both object and JSON APIs reject unknown
+options or rules. Each annotation records its convention; missing annotations
+were not requested, and null tomb results mean the rule does not apply.
+
 Node 环境的 Wasm 冒烟测试：
 
 ```bash

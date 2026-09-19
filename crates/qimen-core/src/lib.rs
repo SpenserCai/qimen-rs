@@ -9,14 +9,17 @@
 //! let request = qimen_core::ChartRequest::new(2026, 9, 18, 14);
 //! let chart = qimen_core::calculate(&request)?;
 //! assert_eq!(chart.palaces.len(), 9);
-//! assert_eq!(chart.schema_version, "1.0");
+//! assert_eq!(chart.schema_version, "1.1");
 //! # Ok::<(), qimen_core::Error>(())
 //! ```
 
 mod engine;
+mod extensions;
 mod model;
+mod request;
 mod symbols;
 
+pub use extensions::*;
 pub use model::{
     AnnotationBasis, CenterPalaceRule, Chart, Conventions, HeavenStem, Horse, Leaders, Palace,
     PillarVoids, TianQinRule, Xun,
@@ -25,13 +28,14 @@ pub use qimen_calendar::{
     Branch, CalendarError, CalendarRequest, CalendarResult, CivilDateTime, Cycle, DayBoundary,
     FourPillars, LunarDate, SolarTerm, Stem,
 };
+pub use request::{CalculationRequest, Calculator, calculate_with_options};
 pub use symbols::{Deity, Direction, Door, Dun, Element, Method, Star, Trigram, Yuan};
 
 /// Calendar input for the default time-based Chai Bu rotating chart.
 pub type ChartRequest = CalendarRequest;
 
 /// Version of the serialized chart structure.
-pub const SCHEMA_VERSION: &str = "1.0";
+pub const SCHEMA_VERSION: &str = "1.1";
 
 /// An invalid calendar request, malformed JSON, or serialization failure.
 #[derive(Debug, thiserror::Error)]
@@ -59,23 +63,25 @@ pub fn calculate(request: &ChartRequest) -> Result<Chart, Error> {
 ///
 /// Missing `minute` and `second` default to zero, `utc_offset_minutes` to
 /// 480 (UTC+08:00), and `day_boundary` to `"zi_start"`. Unknown request fields
-/// are errors. Language bindings use this function to share the exact schema.
+/// are errors. Optional `extensions` select explicitly named annotation rules;
+/// omitting them leaves every extension disabled. Language bindings use this
+/// function to share the exact schema.
 pub fn calculate_json(request_json: &str) -> Result<String, Error> {
-    let request = serde_json::from_str::<ChartRequest>(request_json)?;
-    Ok(serde_json::to_string(&calculate(&request)?)?)
+    let request = serde_json::from_str::<CalculationRequest>(request_json)?;
+    Ok(serde_json::to_string(&request.calculate()?)?)
 }
 
 /// Produces an indented JSON chart for human-readable command-line output.
 pub fn calculate_json_pretty(request_json: &str) -> Result<String, Error> {
-    let request = serde_json::from_str::<ChartRequest>(request_json)?;
-    Ok(serde_json::to_string_pretty(&calculate(&request)?)?)
+    let request = serde_json::from_str::<CalculationRequest>(request_json)?;
+    Ok(serde_json::to_string_pretty(&request.calculate()?)?)
 }
 
 /// Returns the generated JSON Schema for input, including serde defaults.
 #[cfg(feature = "schema")]
 #[must_use]
 pub fn request_schema() -> schemars::Schema {
-    schemars::schema_for!(ChartRequest)
+    schemars::schema_for!(CalculationRequest)
 }
 
 /// Returns the generated JSON Schema for the complete versioned chart output.

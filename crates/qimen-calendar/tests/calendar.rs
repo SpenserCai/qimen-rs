@@ -156,6 +156,12 @@ fn json_defaults_and_unknown_field_rejection() -> Result<(), serde_json::Error> 
     assert_eq!(request, CalendarRequest::new(2024, 2, 10, 12));
     assert!(
         serde_json::from_str::<CalendarRequest>(
+            r#"{"year":2024,"month":2,"day":10,"hour":12,"day_boundary":{"zi_start":null}}"#
+        )
+        .is_err()
+    );
+    assert!(
+        serde_json::from_str::<CalendarRequest>(
             r#"{"year":2024,"month":2,"day":10,"hour":12,"offset":0}"#
         )
         .is_err()
