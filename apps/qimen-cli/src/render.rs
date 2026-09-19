@@ -173,5 +173,9 @@ pub(crate) fn chart(output: &mut impl Write, chart: &Chart) -> io::Result<()> {
             border(output, width, '├', '┼', '┤')?;
         }
     }
-    border(output, width, '└', '┴', '┘')
+    border(output, width, '└', '┴', '┘')?;
+    if let Some(extensions) = &chart.extensions {
+        crate::render_extensions::write(output, extensions)?;
+    }
+    Ok(())
 }

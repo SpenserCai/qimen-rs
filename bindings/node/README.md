@@ -21,6 +21,35 @@ CommonJS 使用 `const { calculate } = require('@spensercai/qimen-rs')`。
 无效日期或未知字段抛出 `Error`，`error.code === 'InvalidArg'`。计算为同步调用；
 大量批处理可在 Node Worker 中运行。
 
+扩展标注默认关闭，使用请求的 `extensions` 参数选择需要的规则：
+
+```typescript
+import { calculate, type ExtensionOptions } from '@spensercai/qimen-rs';
+
+const extensions: ExtensionOptions = {
+  hidden_stems: 'duty_door_hour_stem_with_center_fallback',
+  strength: 'classical_stars_and_five_elements',
+  growth_stages: 'yang_forward_yin_reverse_fire_earth',
+  punishments: 'six_instrument_branches',
+  tombs: 'growth_stage_fire_earth',
+  day_horse: 'day_branch_three_harmony',
+  door_pressure: 'door_controls_palace',
+};
+const chart = calculate({ year: 2026, month: 9, day: 18, hour: 18, extensions });
+console.log(chart.extensions?.day_horse?.horse);
+```
+
+可只传一项；空配置不生成 `extensions` 输出字段。每项结果均记录实际 `rule`，
+寄干保留来源及盘层，日马独立于时马。入墓另支持 `traditional_three_wonders`，
+只判断三奇；不适用的六仪返回 `null`，与“未入墓”的 `false` 有区别。
+全部选项和结果有 TypeScript 类型，JSON schema 版本为 `1.1`。
+完整规则与适用范围见 [扩展约定](../../docs/extensions.md)。
+
+Optional annotations are disabled by default. Select explicit rules in the
+request's `extensions` object; unknown names or conventions throw `InvalidArg`.
+Each result preserves its rule and stem provenance. Missing annotations were not
+requested; null tomb results mean that the selected convention does not apply.
+
 源码构建：
 
 ```bash

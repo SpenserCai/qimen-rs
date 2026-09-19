@@ -6,6 +6,7 @@
 use std::borrow::Cow;
 
 use qimen_calendar::CalendarRequest;
+use qimen_core::CalculationRequest;
 use rmcp::{
     ErrorData, RoleServer, ServerHandler,
     model::{
@@ -39,14 +40,15 @@ fn definition(name: &str) -> Option<Tool> {
             "时家拆补转盘 / Hourly Qimen chart",
             "Calculate a complete hourly Chaibu rotating Qimen chart, including four pillars, \
              solar terms, dun, yuan, ju, xun, leaders, voids, horse and all nine palaces. \
-             Defaults: UTC+08:00, Zi-start day boundary (23:00), civil time.",
+             Defaults: UTC+08:00, Zi-start day boundary (23:00), civil time. Optional \
+             extensions are disabled by default; select their documented conventions in \
+             the extensions argument for each call.",
         ),
         _ => return None,
     };
 
     let tool = Tool::new(name, description, JsonObject::new())
         .with_title(title)
-        .with_input_schema::<CalendarRequest>()
         .with_annotations(
             ToolAnnotations::new()
                 .read_only(true)
@@ -55,8 +57,12 @@ fn definition(name: &str) -> Option<Tool> {
                 .open_world(false),
         );
     Some(match name {
-        "bazi" => tool.with_output_schema::<qimen_calendar::CalendarResult>(),
-        _ => tool.with_output_schema::<qimen_core::Chart>(),
+        "bazi" => tool
+            .with_input_schema::<CalendarRequest>()
+            .with_output_schema::<qimen_calendar::CalendarResult>(),
+        _ => tool
+            .with_input_schema::<CalculationRequest>()
+            .with_output_schema::<qimen_core::Chart>(),
     })
 }
 
@@ -87,7 +93,9 @@ impl ServerHandler for QimenServer {
             .with_instructions(
                 "Use bazi for calendrical calculations or paipan for a complete Qimen chart. \
                  Always preserve the input UTC offset and day-boundary convention when comparing \
-                 charts. Calculations are local, deterministic and do not interpret predictions.",
+                 charts. Optional annotations are available only on paipan through its extensions \
+                 argument; they never alter the base chart. Calculations are local, deterministic \
+                 and do not interpret predictions.",
             )
     }
 
@@ -131,12 +139,21 @@ impl ServerHandler for QimenServer {
                 None,
             ));
         }
-        let input: CalendarRequest =
-            serde_json::from_value(Value::Object(request.arguments.unwrap_or_default()))
-                .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?;
+        let arguments = Value::Object(request.arguments.unwrap_or_default());
         match request.name.as_ref() {
-            "bazi" => result(qimen_calendar::calculate(&input)),
-            _ => result(qimen_core::calculate(&input)),
+            "bazi" => {
+                let input: CalendarRequest = serde_json::from_value(arguments)
+                    .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?;
+                result(qimen_calendar::calculate(&input))
+            }
+            _ => {
+                let input: CalculationRequest = serde_json::from_value(arguments)
+                    .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?;
+                result(qimen_core::calculate_with_options(
+                    &input.calendar,
+                    &input.extensions,
+                ))
+            }
         }
     }
 }

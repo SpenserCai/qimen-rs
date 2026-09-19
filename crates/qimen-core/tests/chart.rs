@@ -234,7 +234,7 @@ fn external_2016_yin_eight_plate_matches_all_visible_cells() {
 fn strict_input_and_versioned_output_roundtrip() {
     let compact = calculate_json(r#"{"year":2026,"month":9,"day":18,"hour":14}"#).unwrap();
     let chart: Chart = serde_json::from_str(&compact).unwrap();
-    assert_eq!(chart.schema_version, "1.0");
+    assert_eq!(chart.schema_version, "1.1");
     assert_eq!(chart.input.utc_offset_minutes, 480);
     assert_eq!(chart.input.minute, 0);
     let pretty = calculate_json_pretty(r#"{"year":2026,"month":9,"day":18,"hour":14}"#).unwrap();

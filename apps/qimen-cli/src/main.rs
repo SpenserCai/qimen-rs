@@ -2,6 +2,7 @@
 
 mod args;
 mod render;
+mod render_extensions;
 
 use std::{io::Write, process::ExitCode};
 
@@ -13,8 +14,11 @@ fn run(options: Options) -> Result<(), Box<dyn std::error::Error>> {
     let mut output = std::io::BufWriter::new(std::io::stdout().lock());
     match options.command {
         Command::Paipan(input) => {
-            let chart = qimen_core::calculate(&input.request())?;
-            if input.json {
+            let chart = qimen_core::calculate_with_options(
+                &input.calendar.request(),
+                &input.extension_options()?,
+            )?;
+            if input.calendar.json {
                 serde_json::to_writer_pretty(&mut output, &chart)?;
                 writeln!(output)?;
             } else {

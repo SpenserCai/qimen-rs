@@ -16,6 +16,17 @@
       "description": "Yang or yin dun.",
       "$ref": "#/$defs/Dun"
     },
+    "extensions": {
+      "description": "Opt-in annotations and their named calculation rules; absent by default.\nThese never alter the base calendar or rotating plates.",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ChartExtensions"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "horse": {
       "description": "Hour-branch travelling horse.",
       "$ref": "#/$defs/Horse"
@@ -161,6 +172,24 @@
         }
       ]
     },
+    "BranchGrowth": {
+      "description": "One growth stage at one concrete palace branch.",
+      "type": "object",
+      "properties": {
+        "branch": {
+          "description": "The actual palace branch; double-branch palaces retain both entries.",
+          "$ref": "#/$defs/Branch"
+        },
+        "stage": {
+          "description": "Stage at that branch under the selected growth convention.",
+          "$ref": "#/$defs/GrowthStage"
+        }
+      },
+      "required": [
+        "branch",
+        "stage"
+      ]
+    },
     "CalendarRequest": {
       "description": "Gregorian input and explicit calculation conventions.\n\nMissing JSON `minute` and `second` default to zero, `utc_offset_minutes` to\n480 (UTC+08:00), and `day_boundary` to `zi_start`. Unknown fields are rejected\nso a misspelled convention cannot silently change the result.",
       "type": "object",
@@ -259,6 +288,89 @@
           "const": "always_kun"
         }
       ]
+    },
+    "ChartExtensions": {
+      "description": "Optional annotations. Absent fields were not requested, rather than negative.",
+      "type": "object",
+      "properties": {
+        "day_horse": {
+          "description": "Day-pillar horse, preserving the base chart's separate hour horse.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DayHorse"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "door_pressure": {
+          "description": "Door-over-palace element control; excludes the reverse relationship.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DoorPressures"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "growth_stages": {
+          "description": "Stem growth stages at each constituent branch of a palace.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GrowthStages"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "hidden_stems": {
+          "description": "Nine-palace 暗干 with its construction convention.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HiddenStems"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "punishments": {
+          "description": "Six-instrument punishment annotations.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Punishments"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "strength": {
+          "description": "Star, door and stem strengths against palace and solar month.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Strengths"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tombs": {
+          "description": "Stem tomb annotations with an explicit convention and applicability.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Tombs"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
     },
     "CivilDateTime": {
       "description": "An unambiguous second-resolution civil timestamp with a fixed UTC offset.",
@@ -381,6 +493,39 @@
           "description": "Change the day pillar at 00:00. The 23:00 子 hour still uses the following\nday's stem for its hour pillar, preserving one pillar across 子时.",
           "type": "string",
           "const": "midnight"
+        }
+      ]
+    },
+    "DayHorse": {
+      "description": "Optional day horse, independent of the existing hour-based palace marker.",
+      "type": "object",
+      "properties": {
+        "horse": {
+          "description": "Day horse branch and its palace.",
+          "$ref": "#/$defs/Horse"
+        },
+        "pillar": {
+          "description": "Exact day pillar after applying the request's day-boundary convention.",
+          "$ref": "#/$defs/Cycle"
+        },
+        "rule": {
+          "description": "Selected derivation convention.",
+          "$ref": "#/$defs/DayHorseRule"
+        }
+      },
+      "required": [
+        "rule",
+        "pillar",
+        "horse"
+      ]
+    },
+    "DayHorseRule": {
+      "description": "Supported day-horse conventions.",
+      "oneOf": [
+        {
+          "description": "申子辰→寅、寅午戌→申、亥卯未→巳、巳酉丑→亥, using the\ncalculated day pillar and therefore the request's day-boundary rule.",
+          "type": "string",
+          "const": "day_branch_three_harmony"
         }
       ]
     },
@@ -524,6 +669,101 @@
         }
       ]
     },
+    "DoorPressure": {
+      "description": "Door pressure for a single occupied door palace.",
+      "type": "object",
+      "properties": {
+        "door": {
+          "description": "Moving door identity.",
+          "$ref": "#/$defs/Door"
+        },
+        "door_element": {
+          "description": "Intrinsic door element.",
+          "$ref": "#/$defs/Element"
+        },
+        "is_pressed": {
+          "description": "True only when the door's element controls the palace's element.",
+          "type": "boolean"
+        },
+        "palace": {
+          "description": "Destination Luo Shu palace number.",
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "palace_element": {
+          "description": "Destination palace element.",
+          "$ref": "#/$defs/Element"
+        }
+      },
+      "required": [
+        "palace",
+        "door",
+        "door_element",
+        "palace_element",
+        "is_pressed"
+      ]
+    },
+    "DoorPressureRule": {
+      "description": "Supported door-pressure conventions.",
+      "oneOf": [
+        {
+          "description": "Door element controls palace element; the reverse is not 门迫.",
+          "type": "string",
+          "const": "door_controls_palace"
+        }
+      ]
+    },
+    "DoorPressures": {
+      "description": "Door-pressure results for all eight doors.",
+      "type": "object",
+      "properties": {
+        "doors": {
+          "description": "Eight door entries in numeric destination-palace order.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DoorPressure"
+          }
+        },
+        "rule": {
+          "description": "Selected control-direction convention.",
+          "$ref": "#/$defs/DoorPressureRule"
+        }
+      },
+      "required": [
+        "rule",
+        "doors"
+      ]
+    },
+    "DoorStrength": {
+      "description": "Strength of a moving door.",
+      "type": "object",
+      "properties": {
+        "at_month": {
+          "description": "Relationship to the solar-month branch's element.",
+          "$ref": "#/$defs/ElementStrengthState"
+        },
+        "at_palace": {
+          "description": "Relationship to the destination palace's element.",
+          "$ref": "#/$defs/ElementStrengthState"
+        },
+        "door": {
+          "description": "Door identity.",
+          "$ref": "#/$defs/Door"
+        },
+        "element": {
+          "description": "Door's intrinsic element.",
+          "$ref": "#/$defs/Element"
+        }
+      },
+      "required": [
+        "door",
+        "element",
+        "at_palace",
+        "at_month"
+      ]
+    },
     "Dun": {
       "description": "Yang or yin dun, determined by the current solar term.",
       "oneOf": [
@@ -569,6 +809,36 @@
         }
       ]
     },
+    "ElementStrengthState": {
+      "description": "Ordinary five-element strength, used for doors and stems.",
+      "oneOf": [
+        {
+          "description": "Same element as the environment: 旺.",
+          "type": "string",
+          "const": "wang"
+        },
+        {
+          "description": "Generated by the environment: 相.",
+          "type": "string",
+          "const": "xiang"
+        },
+        {
+          "description": "Generates the environment: 休.",
+          "type": "string",
+          "const": "xiu"
+        },
+        {
+          "description": "Controls the environment: 囚.",
+          "type": "string",
+          "const": "qiu"
+        },
+        {
+          "description": "Controlled by the environment: 死.",
+          "type": "string",
+          "const": "si"
+        }
+      ]
+    },
     "FourPillars": {
       "description": "The four sexagenary pillars, with exact term boundaries for year and month.",
       "type": "object",
@@ -597,6 +867,102 @@
         "hour"
       ]
     },
+    "GrowthRule": {
+      "description": "Supported twelve-stage growth conventions.",
+      "oneOf": [
+        {
+          "description": "Yang stems progress forward, yin stems backward; 戊 follows 丙 and\n己 follows 丁. Every branch in a double-branch palace remains separate.",
+          "type": "string",
+          "const": "yang_forward_yin_reverse_fire_earth"
+        }
+      ]
+    },
+    "GrowthStage": {
+      "description": "One of the twelve stages of stem growth.",
+      "oneOf": [
+        {
+          "description": "长生.",
+          "type": "string",
+          "const": "chang_sheng"
+        },
+        {
+          "description": "沐浴.",
+          "type": "string",
+          "const": "mu_yu"
+        },
+        {
+          "description": "冠带.",
+          "type": "string",
+          "const": "guan_dai"
+        },
+        {
+          "description": "临官.",
+          "type": "string",
+          "const": "lin_guan"
+        },
+        {
+          "description": "帝旺.",
+          "type": "string",
+          "const": "di_wang"
+        },
+        {
+          "description": "衰.",
+          "type": "string",
+          "const": "shuai"
+        },
+        {
+          "description": "病.",
+          "type": "string",
+          "const": "bing"
+        },
+        {
+          "description": "死.",
+          "type": "string",
+          "const": "si"
+        },
+        {
+          "description": "墓.",
+          "type": "string",
+          "const": "mu"
+        },
+        {
+          "description": "绝.",
+          "type": "string",
+          "const": "jue"
+        },
+        {
+          "description": "胎.",
+          "type": "string",
+          "const": "tai"
+        },
+        {
+          "description": "养.",
+          "type": "string",
+          "const": "yang"
+        }
+      ]
+    },
+    "GrowthStages": {
+      "description": "Twelve-stage results and the polarity/earth convention used.",
+      "type": "object",
+      "properties": {
+        "rule": {
+          "description": "Explicit growth convention.",
+          "$ref": "#/$defs/GrowthRule"
+        },
+        "stems": {
+          "description": "Every earthly/heavenly stem; hidden stems are included when enabled.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/StemGrowth"
+          }
+        }
+      },
+      "required": [
+        "rule",
+        "stems"
+      ]
+    },
     "HeavenStem": {
       "description": "A heavenly-plate stem, including its provenance and center-hosting identity.",
       "type": "object",
@@ -623,8 +989,80 @@
         "is_center_hosted"
       ]
     },
+    "HiddenStem": {
+      "description": "A constructed hidden stem in one numeric palace.",
+      "type": "object",
+      "properties": {
+        "palace": {
+          "description": "Luo Shu palace number.",
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "stem": {
+          "description": "Hidden-plate stem.",
+          "$ref": "#/$defs/Stem"
+        }
+      },
+      "required": [
+        "palace",
+        "stem"
+      ]
+    },
+    "HiddenStemRule": {
+      "description": "Supported 暗干 construction conventions.",
+      "oneOf": [
+        {
+          "description": "Put the hour stem at the duty door, then fly the nine instruments in\nnumeric palace order (yang forward, yin backward). If it repeats that\npalace's earth stem, start at palace five. 甲 uses its hidden instrument.",
+          "type": "string",
+          "const": "duty_door_hour_stem_with_center_fallback"
+        }
+      ]
+    },
+    "HiddenStems": {
+      "description": "Nine-palace hidden-stem calculation and its actual starting point.",
+      "type": "object",
+      "properties": {
+        "effective_hour_stem": {
+          "description": "Hour stem, with 甲 replaced by its period's hidden instrument.",
+          "$ref": "#/$defs/Stem"
+        },
+        "palaces": {
+          "description": "Exactly nine records, in numeric palace order.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/HiddenStem"
+          },
+          "maxItems": 9,
+          "minItems": 9
+        },
+        "rule": {
+          "description": "Selected construction convention.",
+          "$ref": "#/$defs/HiddenStemRule"
+        },
+        "start_palace": {
+          "description": "Actual initial numeric palace, after the repetition fallback.",
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "used_center_fallback": {
+          "description": "Whether repetition with the duty door's earth stem moved the start to five.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "rule",
+        "effective_hour_stem",
+        "start_palace",
+        "used_center_fallback",
+        "palaces"
+      ]
+    },
     "Horse": {
-      "description": "The hour-branch travelling horse.",
+      "description": "A travelling horse; its containing field identifies the source pillar.",
       "type": "object",
       "properties": {
         "branch": {
@@ -846,6 +1284,54 @@
         "is_horse"
       ]
     },
+    "PalaceStrength": {
+      "description": "All strength annotations for a single palace.",
+      "type": "object",
+      "properties": {
+        "door": {
+          "description": "Door annotation, absent at the center.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DoorStrength"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "element": {
+          "description": "Fixed destination-palace element.",
+          "$ref": "#/$defs/Element"
+        },
+        "palace": {
+          "description": "Luo Shu palace number.",
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "stars": {
+          "description": "Separate annotations for every star, including 天禽.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/StarStrength"
+          }
+        },
+        "stems": {
+          "description": "Every earthly/heavenly stem; hidden stems are included when enabled.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/StemStrength"
+          }
+        }
+      },
+      "required": [
+        "palace",
+        "element",
+        "stars",
+        "stems"
+      ]
+    },
     "PillarVoids": {
       "description": "The two void branches of each pillar; palace markers use the hour pair.",
       "type": "object",
@@ -892,6 +1378,37 @@
         "month",
         "day",
         "hour"
+      ]
+    },
+    "PunishmentRule": {
+      "description": "Supported 六仪击刑 conventions.",
+      "oneOf": [
+        {
+          "description": "戊/己/庚/辛/壬/癸 at 卯/未/寅/午/辰/巳 respectively.\nHeavenly-plate instruments are the traditional primary application;\nearthly and hidden plates are separately identified geometric annotations.",
+          "type": "string",
+          "const": "six_instrument_branches"
+        }
+      ]
+    },
+    "Punishments": {
+      "description": "六仪击刑 evaluations, with plate identities retained.",
+      "type": "object",
+      "properties": {
+        "rule": {
+          "description": "Selected punishment convention.",
+          "$ref": "#/$defs/PunishmentRule"
+        },
+        "stems": {
+          "description": "Heavenly instruments are primary; other plate results are explicitly typed.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/StemPunishment"
+          }
+        }
+      },
+      "required": [
+        "rule",
+        "stems"
       ]
     },
     "SolarTerm": {
@@ -970,6 +1487,64 @@
         }
       ]
     },
+    "StarStrength": {
+      "description": "Strength of a moving star under both explicitly recorded environments.",
+      "type": "object",
+      "properties": {
+        "at_month": {
+          "description": "Relationship to the solar-month branch's element.",
+          "$ref": "#/$defs/StarStrengthState"
+        },
+        "at_palace": {
+          "description": "Relationship to the destination palace's element.",
+          "$ref": "#/$defs/StarStrengthState"
+        },
+        "element": {
+          "description": "Star's intrinsic element.",
+          "$ref": "#/$defs/Element"
+        },
+        "star": {
+          "description": "Star identity, including a separate 天禽 entry.",
+          "$ref": "#/$defs/Star"
+        }
+      },
+      "required": [
+        "star",
+        "element",
+        "at_palace",
+        "at_month"
+      ]
+    },
+    "StarStrengthState": {
+      "description": "Nine-star strength; 废 is distinct from the ordinary element's 死.",
+      "oneOf": [
+        {
+          "description": "The star generates the environment: 旺.",
+          "type": "string",
+          "const": "wang"
+        },
+        {
+          "description": "The star and environment have the same element: 相.",
+          "type": "string",
+          "const": "xiang"
+        },
+        {
+          "description": "The star controls the environment: 休.",
+          "type": "string",
+          "const": "xiu"
+        },
+        {
+          "description": "The environment controls the star: 囚.",
+          "type": "string",
+          "const": "qiu"
+        },
+        {
+          "description": "The environment generates the star: 废.",
+          "type": "string",
+          "const": "fei"
+        }
+      ]
+    },
     "Stem": {
       "description": "The ten heavenly stems in their traditional order.",
       "oneOf": [
@@ -1025,6 +1600,228 @@
         }
       ]
     },
+    "StemGrowth": {
+      "description": "Growth stages for one stem occurrence.",
+      "type": "object",
+      "properties": {
+        "branches": {
+          "description": "Zero branches at center five; one or two elsewhere.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BranchGrowth"
+          }
+        },
+        "placement": {
+          "description": "Stem and plate provenance.",
+          "$ref": "#/$defs/StemPlacement"
+        }
+      },
+      "required": [
+        "placement",
+        "branches"
+      ]
+    },
+    "StemPlacement": {
+      "description": "Identity of a stem occurrence; hosted stems must not be silently collapsed.",
+      "type": "object",
+      "properties": {
+        "is_center_hosted": {
+          "description": "Whether this is an additional hosted occurrence of the center stem.",
+          "type": "boolean"
+        },
+        "palace": {
+          "description": "Destination Luo Shu palace, one through nine.",
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "plate": {
+          "description": "Heavenly, earthly or optional hidden plate.",
+          "$ref": "#/$defs/StemPlate"
+        },
+        "source_palace": {
+          "description": "Source earth palace; absent for constructed hidden-plate stems.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "stem": {
+          "description": "Heavenly stem.",
+          "$ref": "#/$defs/Stem"
+        }
+      },
+      "required": [
+        "palace",
+        "plate",
+        "stem",
+        "is_center_hosted"
+      ]
+    },
+    "StemPlate": {
+      "description": "A plate carrying a stem annotation.",
+      "oneOf": [
+        {
+          "description": "Rotating heavenly plate.",
+          "type": "string",
+          "const": "heaven"
+        },
+        {
+          "description": "Fixed earthly plate, including the explicitly identified hosted center.",
+          "type": "string",
+          "const": "earth"
+        },
+        {
+          "description": "Optional nine-palace 暗干 plate; included only when requested.",
+          "type": "string",
+          "const": "hidden"
+        }
+      ]
+    },
+    "StemPunishment": {
+      "description": "Punishment evaluation for one stem occurrence.",
+      "type": "object",
+      "properties": {
+        "hidden_jia": {
+          "description": "The six instrument's hidden 甲 pillar; absent for the three wonders.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Cycle"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "is_punished": {
+          "description": "Whether the actual destination palace contains that branch.",
+          "type": "boolean"
+        },
+        "placement": {
+          "description": "Stem and plate provenance.",
+          "$ref": "#/$defs/StemPlacement"
+        },
+        "punished_branch": {
+          "description": "Palace branch struck by this instrument; absent when not applicable.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Branch"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "placement",
+        "is_punished"
+      ]
+    },
+    "StemStrength": {
+      "description": "Strength of one stem occurrence.",
+      "type": "object",
+      "properties": {
+        "at_month": {
+          "description": "Relationship to the solar-month branch's element.",
+          "$ref": "#/$defs/ElementStrengthState"
+        },
+        "at_palace": {
+          "description": "Relationship to the destination palace's element.",
+          "$ref": "#/$defs/ElementStrengthState"
+        },
+        "element": {
+          "description": "Stem's intrinsic element.",
+          "$ref": "#/$defs/Element"
+        },
+        "placement": {
+          "description": "Stem and plate provenance.",
+          "$ref": "#/$defs/StemPlacement"
+        }
+      },
+      "required": [
+        "placement",
+        "element",
+        "at_palace",
+        "at_month"
+      ]
+    },
+    "StemTomb": {
+      "description": "Tomb evaluation for one stem occurrence.",
+      "type": "object",
+      "properties": {
+        "is_in_tomb": {
+          "description": "Whether the palace contains the tomb branch; `None` means not applicable.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "placement": {
+          "description": "Stem and plate provenance.",
+          "$ref": "#/$defs/StemPlacement"
+        },
+        "tomb_branch": {
+          "description": "Branch containing the tomb; `None` when the chosen rule does not cover\nthis stem (for example a six instrument under the three-wonders rule).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Branch"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "placement"
+      ]
+    },
+    "StrengthRule": {
+      "description": "Supported element-strength conventions.",
+      "oneOf": [
+        {
+          "description": "Stars use 生我为废、我生为旺、同我为相、我克为休、克我为囚.\nDoors/stems use ordinary 旺相休囚死. Both evaluate the palace element\nand the element of the solar-month pillar's branch (not lunar month).",
+          "type": "string",
+          "const": "classical_stars_and_five_elements"
+        }
+      ]
+    },
+    "Strengths": {
+      "description": "Strength annotations with the exact seasonal environment used.",
+      "type": "object",
+      "properties": {
+        "month_branch": {
+          "description": "Branch of the solar-month pillar; never inferred from lunar month number.",
+          "$ref": "#/$defs/Branch"
+        },
+        "month_element": {
+          "description": "Element of the solar-month branch. 辰戌丑未 are earth; no implicit\neighteen-day seasonal-transition adjustment is applied.",
+          "$ref": "#/$defs/Element"
+        },
+        "palaces": {
+          "description": "All nine palaces in numeric order.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PalaceStrength"
+          }
+        },
+        "rule": {
+          "description": "Selected rule, distinguishing star strength from ordinary element strength.",
+          "$ref": "#/$defs/StrengthRule"
+        }
+      },
+      "required": [
+        "rule",
+        "month_branch",
+        "month_element",
+        "palaces"
+      ]
+    },
     "TianQinRule": {
       "description": "The supported placement of the central star.",
       "oneOf": [
@@ -1033,6 +1830,42 @@
           "type": "string",
           "const": "follows_tian_rui"
         }
+      ]
+    },
+    "TombRule": {
+      "description": "Supported stem-tomb conventions; these must not be conflated.",
+      "oneOf": [
+        {
+          "description": "Use 墓 in the yang-forward/yin-reverse twelve stages, with earth\nfollowing fire. In this convention 乙's tomb is 戌, not 未.",
+          "type": "string",
+          "const": "growth_stage_fire_earth"
+        },
+        {
+          "description": "Classical 三奇入墓 only: 乙→未、丙→戌、丁→丑. Other stems\nare explicitly not applicable; this does not supply a six-instrument rule.",
+          "type": "string",
+          "const": "traditional_three_wonders"
+        }
+      ]
+    },
+    "Tombs": {
+      "description": "Tomb evaluations; applicability remains distinct from a negative result.",
+      "type": "object",
+      "properties": {
+        "rule": {
+          "description": "Selected tomb convention.",
+          "$ref": "#/$defs/TombRule"
+        },
+        "stems": {
+          "description": "Every stem with explicit rule applicability.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/StemTomb"
+          }
+        }
+      },
+      "required": [
+        "rule",
+        "stems"
       ]
     },
     "Trigram": {

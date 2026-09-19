@@ -14,9 +14,10 @@ pub fn calculate(request: JsValue) -> Result<JsValue, JsError> {
     // serde-wasm-bindgen, bypassing serde's deny_unknown_fields validation.
     // Preserve every object key before applying the canonical request schema.
     let request: serde_json::Value = serde_wasm_bindgen::from_value(request)?;
-    let request: qimen_core::ChartRequest = serde_json::from_value(request)?;
-    let chart =
-        qimen_core::calculate(&request).map_err(|error| JsError::new(&error.to_string()))?;
+    let request: qimen_core::CalculationRequest = serde_json::from_value(request)?;
+    let chart = request
+        .calculate()
+        .map_err(|error| JsError::new(&error.to_string()))?;
     Ok(chart.serialize(&serde_wasm_bindgen::Serializer::json_compatible())?)
 }
 

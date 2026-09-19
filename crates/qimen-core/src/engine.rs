@@ -122,6 +122,7 @@ pub(crate) fn build(request: &ChartRequest, calendar: CalendarResult) -> Chart {
             hour: void_branches(pillars.hour),
         },
         palaces,
+        extensions: None,
     }
 }
 
@@ -139,7 +140,7 @@ fn void_branches(pillar: Cycle) -> [Branch; 2] {
     [Branch::from_index(first), Branch::from_index(first + 1)]
 }
 
-fn horse(branch: Branch) -> Horse {
+pub(crate) fn horse(branch: Branch) -> Horse {
     let branch = match branch.index() % 4 {
         0 => Branch::Yin,
         1 => Branch::Hai,

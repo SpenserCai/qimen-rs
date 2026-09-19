@@ -2,6 +2,32 @@
 
 以下记录本次开发期间实际执行并通过的本地验证。它们分别验证不同层面的正确性，不代表全部流派或整个日期范围已经获得独立天文认证。
 
+## 可选扩展验证（2026-09-19）
+
+在 Linux 本地完成独立算法审查、实际 CLI 对盘和以下检查：
+
+- `python scripts/check-quality.py` 全部通过：fmt、全 workspace check / Clippy、rustdoc 和 schema 一致性；警告按错误处理。Rust 测试合计 **56 项通过**，含 doctest。
+- Rust **1.94.0** 按声明的 MSRV 执行 `cargo check --workspace --all-targets --locked` 通过；stable 验证版本为 **1.98.1**，edition 2024。
+- Python 实际构建、安装并导入 release abi3 wheel，**14 项测试通过**。
+- Node.js 实际构建、加载原生模块，TypeScript 检查及 **10 项测试通过**。
+- WASM 构建 nodejs / web 两种目标，实际执行 WASM 测试，并检查两套生成的 TypeScript 声明。
+- MCP 覆盖 2026-07-28 以及四个旧版本实际协商、扩展参数和结构化输出；CLI 检查逐项开启、全开、两种墓法和错误参数。
+
+用户软件截图案例为 **2026-09-18 18:15:00 UTC+08:00**，时家拆补转盘、丙午／丁酉／乙未／乙酉、阴遁九局。暗干九宫、星门落宫/月令旺衰、可辨认的长生和刑墓标注、日马巳与时马亥采用人工抄录的期望值，未从本项目输出反向生成。原图不随仓库分发，具体预期与规则来源见 [扩展规则](extensions.md)，固定断言位于 `crates/qimen-core/tests/extensions.rs`。
+
+另外覆盖九个可见干的完整 108 个长生组合、全部六仪击刑正反例、甲时暗干替代与数字九宫顺逆、寄宫不误判为本位重干、乙在坤宫时两种墓法不同，以及子初/午夜换日对日马的影响。开启注记不改变基础盘；未开启、已开启但未命中、规则不适用分别表达。
+
+独立审查发现并修复了重复 JSON 键、扩展位置数组和枚举对象形式被意外接受的问题；Rust、Python、Node 和 WASM 的计算入口现在按同一 schema 拒绝这些输入。MSRV 和各语言运行时检查均为本地执行，此记录不把 Linux 验证写成已在其他操作系统运行。
+
+复现新增核心案例与整体验证：
+
+```sh
+cargo test --locked -p qimen-core --features schema --test extensions --test request
+python scripts/check-quality.py
+cargo +1.94.0 check --workspace --all-targets --locked
+cargo run --locked -p qimen-cli -- paipan --year 2026 --month 9 --day 18 --hour 18 --minute 15 --extensions all
+```
+
 ## 跨实现历法差分
 
 `scripts/compare-calendar.py` 使用独立 Python 环境中的 `lunar_python==1.4.8` 对照实际编译的 `qimen bazi --json`：

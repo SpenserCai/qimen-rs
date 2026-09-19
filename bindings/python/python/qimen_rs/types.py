@@ -1,4 +1,4 @@
-"""Static Python types for the canonical qimen-core schema 1.0.
+"""Static Python types for the canonical qimen-core schema 1.1.
 
 JSON arrays remain lists at runtime; no independent conversion or chart logic
 is introduced by these definitions. Keep these and Node's schema.d.ts aligned
@@ -17,6 +17,25 @@ Element = Literal["wood", "fire", "earth", "metal", "water"]
 Star = Literal["tian_peng", "tian_rui", "tian_chong", "tian_fu", "tian_qin", "tian_xin", "tian_zhu", "tian_ren", "tian_ying"]
 Door = Literal["xiu", "si", "shang", "du", "kai", "jing", "sheng", "scene"]
 Deity = Literal["zhi_fu", "teng_she", "tai_yin", "liu_he", "bai_hu", "xuan_wu", "jiu_di", "jiu_tian"]
+HiddenStemRule = Literal["duty_door_hour_stem_with_center_fallback"]
+StrengthRule = Literal["classical_stars_and_five_elements"]
+GrowthRule = Literal["yang_forward_yin_reverse_fire_earth"]
+PunishmentRule = Literal["six_instrument_branches"]
+TombRule = Literal["growth_stage_fire_earth", "traditional_three_wonders"]
+DayHorseRule = Literal["day_branch_three_harmony"]
+DoorPressureRule = Literal["door_controls_palace"]
+
+
+class ExtensionOptions(TypedDict, total=False):
+    """Explicit annotation conventions; omitted or null rules are disabled."""
+
+    hidden_stems: HiddenStemRule | None
+    strength: StrengthRule | None
+    growth_stages: GrowthRule | None
+    punishments: PunishmentRule | None
+    tombs: TombRule | None
+    day_horse: DayHorseRule | None
+    door_pressure: DoorPressureRule | None
 
 
 class _RequiredRequest(TypedDict):
@@ -33,6 +52,7 @@ class ChartRequest(_RequiredRequest, total=False):
     second: int
     utc_offset_minutes: int
     day_boundary: DayBoundary
+    extensions: ExtensionOptions
 
 
 class ValidatedInput(_RequiredRequest):
@@ -137,7 +157,149 @@ class Palace(TypedDict):
     is_horse: bool
 
 
-class Chart(TypedDict):
+StemPlate = Literal["heaven", "earth", "hidden"]
+StarStrengthState = Literal["wang", "xiang", "xiu", "qiu", "fei"]
+ElementStrengthState = Literal["wang", "xiang", "xiu", "qiu", "si"]
+GrowthStage = Literal["chang_sheng", "mu_yu", "guan_dai", "lin_guan", "di_wang", "shuai", "bing", "si", "mu", "jue", "tai", "yang"]
+
+
+class StemPlacement(TypedDict):
+    """A stem occurrence, retaining its plate and hosted-center provenance."""
+
+    palace: PalaceNumber
+    plate: StemPlate
+    stem: Stem
+    source_palace: PalaceNumber | None
+    is_center_hosted: bool
+
+
+class HiddenStem(TypedDict):
+    palace: PalaceNumber
+    stem: Stem
+
+
+class HiddenStems(TypedDict):
+    rule: HiddenStemRule
+    effective_hour_stem: Stem
+    start_palace: PalaceNumber
+    used_center_fallback: bool
+    palaces: list[HiddenStem]
+
+
+class StarStrength(TypedDict):
+    star: Star
+    element: Element
+    at_palace: StarStrengthState
+    at_month: StarStrengthState
+
+
+class DoorStrength(TypedDict):
+    door: Door
+    element: Element
+    at_palace: ElementStrengthState
+    at_month: ElementStrengthState
+
+
+class StemStrength(TypedDict):
+    placement: StemPlacement
+    element: Element
+    at_palace: ElementStrengthState
+    at_month: ElementStrengthState
+
+
+class PalaceStrength(TypedDict):
+    palace: PalaceNumber
+    element: Element
+    stars: list[StarStrength]
+    door: DoorStrength | None
+    stems: list[StemStrength]
+
+
+class Strengths(TypedDict):
+    rule: StrengthRule
+    month_branch: Branch
+    month_element: Element
+    palaces: list[PalaceStrength]
+
+
+class BranchGrowth(TypedDict):
+    branch: Branch
+    stage: GrowthStage
+
+
+class StemGrowth(TypedDict):
+    """Corner-palace branches remain separate; center branches are empty."""
+
+    placement: StemPlacement
+    branches: list[BranchGrowth]
+
+
+class GrowthStages(TypedDict):
+    rule: GrowthRule
+    stems: list[StemGrowth]
+
+
+class StemPunishment(TypedDict):
+    placement: StemPlacement
+    hidden_jia: Cycle | None
+    punished_branch: Branch | None
+    is_punished: bool
+
+
+class Punishments(TypedDict):
+    rule: PunishmentRule
+    stems: list[StemPunishment]
+
+
+class StemTomb(TypedDict):
+    """None means the selected rule does not apply, distinct from False."""
+
+    placement: StemPlacement
+    tomb_branch: Branch | None
+    is_in_tomb: bool | None
+
+
+class Tombs(TypedDict):
+    rule: TombRule
+    stems: list[StemTomb]
+
+
+class DayHorse(TypedDict):
+    rule: DayHorseRule
+    pillar: Cycle
+    horse: Horse
+
+
+class DoorPressure(TypedDict):
+    palace: PalaceNumber
+    door: Door
+    door_element: Element
+    palace_element: Element
+    is_pressed: bool
+
+
+class DoorPressures(TypedDict):
+    rule: DoorPressureRule
+    doors: list[DoorPressure]
+
+
+class ChartExtensions(TypedDict, total=False):
+    """Only requested annotations are present; each result records its rule."""
+
+    hidden_stems: HiddenStems
+    strength: Strengths
+    growth_stages: GrowthStages
+    punishments: Punishments
+    tombs: Tombs
+    day_horse: DayHorse
+    door_pressure: DoorPressures
+
+
+class _OptionalChart(TypedDict, total=False):
+    extensions: ChartExtensions
+
+
+class Chart(_OptionalChart):
     schema_version: str
     input: ValidatedInput
     calendar: CalendarResult
