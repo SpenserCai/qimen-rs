@@ -1,5 +1,7 @@
 # 发布指南
 
+[中文首页](../README.md) · [参与开发](../CONTRIBUTING.md) · [测试指南](validation.md)
+
 本仓库采用统一稳定版本：Rust workspace、Python 分发和 Node / WASM npm 包保持相同版本。发布由 `vX.Y.Z` 标签触发，手动重跑也必须选择版本标签；分支上的手动触发会被明确拒绝。
 
 ## 产物和平台
@@ -14,22 +16,34 @@
 
 原生目标为 Linux x64 / arm64、macOS x64 / arm64、Windows x64。每个 Python wheel 和 Node 原生库在对应架构运行测试；WASM 在 Node 中执行后另行打包浏览器产物。
 
-Python Linux wheel 使用 manylinux_2_28。应用与 Node GNU 二进制使用 Ubuntu 22.04（x64）/ 24.04（arm64）构建，分别要求 glibc 2.35+ / 2.39+；不是 musl / Alpine 包。macOS 原生包分别在 macOS 15 Intel / macOS 14 Apple Silicon 验证。不要在尚未构建并实测的目标上承诺兼容。
+Python Linux wheel 使用 manylinux_2_28。应用与 Node GNU 二进制使用 Ubuntu 22.04（x64）/ 24.04（arm64）构建，分别要求 glibc 2.35+ / 2.39+；不是 musl / Alpine 包。macOS 原生包分别在 macOS 15 Intel / macOS 14 Apple Silicon 验证。其他目标不属于预构建产物的支持范围。
 
 ## 一次性 GitHub 配置
 
-Repository **Settings → Secrets and variables → Actions**：
+发布开关与凭据分别配置：
 
-| 发布渠道 | Repository variable | Secret | Environment |
+1. 在 **Settings → Secrets and variables → Actions → Variables** 添加下表的 Repository variables，值填写小写 `true`。
+2. 在 **Settings → Environments** 创建对应环境，并添加下表的 Environment secrets。也可使用同名 Repository secrets。
+3. 如果环境设置了部署分支或标签限制，需要允许发布标签 `v*`。
+
+| 渠道 | Repository variable | Environment | Secret |
 | --- | --- | --- | --- |
-| crates.io | `PUBLISH_CRATES=true` | `CARGO_REGISTRY_TOKEN` | `crates-io` |
-| PyPI | `PUBLISH_PYPI=true` | `PYPI_API_TOKEN` | `pypi` |
-| Node npm | `PUBLISH_NPM=true` | `NPM_TOKEN` | `npm` |
-| WASM npm | `PUBLISH_WASM=true` | `NPM_TOKEN` | `npm` |
+| crates.io | `PUBLISH_CRATES=true` | `crates-io` | `CARGO_REGISTRY_TOKEN` |
+| PyPI | `PUBLISH_PYPI=true` | `pypi` | `PYPI_API_TOKEN` |
+| Node.js npm | `PUBLISH_NPM=true` | `npm` | `NPM_TOKEN` |
+| WebAssembly npm | `PUBLISH_WASM=true` | `npm` | 共用 `NPM_TOKEN` |
 
-变量默认缺省表示关闭。启用渠道后缺少令牌会令发布失败，不会假装发布成功。令牌可放对应 Environment；可按团队需要配置审批及标签限制。GitHub Release 使用仓库内置 `GITHUB_TOKEN`，不需个人 token。
+发布开关必须使用 Repository variables，供任务启动前的条件判断读取。未设置的渠道保持关闭；启用后需要提供有效凭据。GitHub Release 使用工作流内置的 `GITHUB_TOKEN`，无需额外创建个人访问令牌。
 
-先确认 crates / PyPI 名称可用、npm 的 `@spensercai` scope 归属与各包发布权限。若更改包名或 scope，同时修改 package manifest、loader 生成配置、工作流和文档。npm 主包及其平台包都是公开包，令牌必须对全部名字有权限；工作流开启 npm provenance。
+### 注册表权限
+
+- **crates.io**：账号验证邮箱后创建 API token，授予四个 Rust 包的创建或发布权限。参见 [Cargo 发布说明](https://doc.rust-lang.org/cargo/reference/publishing.html)。
+- **PyPI**：API token 需要具备 `qimen-rs` 的上传权限；已存在的项目优先使用项目范围令牌。保存完整值，包括 `pypi-` 前缀。参见 [PyPI token 说明](https://pypi.org/help/#apitoken)。
+- **npm**：确认 `@spensercai` scope 的归属。Granular access token 的 Packages and scopes 权限选择 **Read and write (publish and stage)**，并启用 **Bypass two-factor authentication**。授权范围覆盖主包、五个平台分包及可选的 WASM 包；仅授予组织管理权限不足以发布包。参见 [npm token 说明](https://docs.npmjs.com/creating-and-viewing-access-tokens/)。
+
+发布前确认包名可用或账号已拥有对应包的发布权限。更改包名或 scope 时，同步修改 manifest、loader 生成配置、工作流和文档。npm 主包及平台包均公开发布，工作流附带 provenance。
+
+当前工作流使用 token 认证。npm 和 PyPI 可进一步采用 OIDC Trusted Publishing；迁移需要同时修改工作流并在注册表配置可信发布者，不能直接删除现有 secrets。配置依据见 [npm](https://docs.npmjs.com/trusted-publishers/) 和 [PyPI](https://docs.pypi.org/trusted-publishers/using-a-publisher/)。
 
 建议分支保护要求 `Quality gate`，限制 release 标签创建权限。依赖和 GitHub Actions 由 Dependabot 定期提出更新，仍须完整 CI 验证。
 

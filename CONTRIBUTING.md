@@ -1,6 +1,8 @@
 # 参与开发
 
-项目结构与长期约束见 [AGENTS.md](AGENTS.md)。默认开发工具链为 Rust stable，edition 2024；声明的最低 Rust 版本在根 `Cargo.toml`。测试公共行为放在各 crate 的 `tests/`，不要求把大量测试内嵌进生产模块。
+[中文首页](README.md) · [测试指南](docs/validation.md) · [维护契约](AGENTS.md)
+
+项目结构与长期约束见 [AGENTS.md](AGENTS.md)。默认开发工具链为 Rust stable，edition 2024；声明的最低 Rust 版本在根 `Cargo.toml`。公共行为测试放在各 crate 的 `tests/`，私有单元测试使用独立模块文件。
 
 ## 获取和验证
 
@@ -21,7 +23,7 @@ cargo test --workspace --locked --exclude qimen-python --exclude qimen-node --ex
 cargo doc --workspace --no-deps --locked
 ```
 
-脚本为编译和文档设置 `RUSTFLAGS=-D warnings` 与 `RUSTDOCFLAGS=-D warnings`；手动执行也应设置。`quality-diagnostics/` 保存各步日志，CI 即使失败也上传诊断。依赖变更后更新并提交锁文件；日常验证使用 `--locked`。
+脚本还执行 `python scripts/check-schemas.py` 检查请求与输出 Schema。脚本为编译和文档设置 `RUSTFLAGS=-D warnings` 与 `RUSTDOCFLAGS=-D warnings`；手动执行也应设置。`quality-diagnostics/` 保存各步日志，CI 即使失败也上传诊断。依赖变更后更新并提交锁文件；日常验证使用 `--locked`。
 
 ## 语言绑定
 
@@ -64,7 +66,7 @@ wasm-pack build bindings/wasm --target web --out-dir pkg --scope spensercai --re
 
 1. 精确公历输入、时区 / UTC 偏移和所有选项。
 2. qimen-rs 版本与完整 JSON 结果。
-3. 参考软件版本、流派、换日 / 真太阳时 / 寄宫设置及截图或文献来源。
+3. 参考软件版本、流派、换日 / 真太阳时 / 寄宫设置及完整参考资料。
 4. 具体差异，例如月柱、局数、值使落宫，而不只描述“盘不一样”。
 
 先消除约定差异，再增加有独立来源的回归测试，最后修正实现。新增流派须说明其推导规则与验证范围；不能以支持选项存在代替完整实现。

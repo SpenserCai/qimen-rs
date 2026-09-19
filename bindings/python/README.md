@@ -1,13 +1,20 @@
 # qimen-rs Python 绑定
 
+[中文首页](../../README.md) · [English](../../README.en.md) · [扩展规则](../../docs/extensions.md)
+
 Python 3.10+；使用 PyO3 和 maturin，计算期间释放 GIL。`calculate` 返回 Python 字典，
 `calculate_json` 提供与 Rust 完全一致的 JSON 接口。CPython 常规 GIL 构建使用 abi3 wheel。
+
+## 快速开始
 
 ```python
 from qimen_rs import calculate
 
 chart = calculate({
-    "year": 2024, "month": 2, "day": 10, "hour": 12,
+    "year": 2024,
+    "month": 2,
+    "day": 10,
+    "hour": 12,
     "utc_offset_minutes": 480,
     "day_boundary": "zi_start",
 })
@@ -17,6 +24,8 @@ print(chart["palaces"])
 输入是指定 UTC 偏移下的民用时间；不会读取机器时区。默认 UTC+08:00，23:00 换日。
 `midnight` 可显式选择 00:00 换日。无效日期、未知参数等由核心统一拒绝为 `ValueError`；
 非字典输入或不能编码为 JSON 的 Python 对象抛出 `TypeError`。返回字段约定见仓库 schema 文档。
+
+## 可选扩展
 
 可选标注默认关闭，通过 `extensions` 参数选择明确的计算规则：
 
@@ -44,11 +53,7 @@ print(chart["extensions"]["day_horse"]["horse"])
 公共类型在 `qimen_rs.types` 中，返回 schema 为 `1.1`。
 完整规则与适用范围见 [扩展约定](../../docs/extensions.md)。
 
-Optional annotations are disabled by default. Pass a typed `extensions` mapping
-either as a keyword argument or inside the request. Each annotation records its
-selected convention; unsupported names or rules are rejected by Rust. Omitted
-annotations were not requested, while a null tomb result means the selected rule
-does not apply. Existing calls without options retain the base chart fields.
+## 开发与构建
 
 在仓库根目录开发和测试：
 
@@ -56,14 +61,15 @@ does not apply. Existing calls without options retain the base chart fields.
 python -m venv .venv
 # 激活虚拟环境后
 python -m pip install 'maturin>=1.9,<2'
-maturin develop --manifest-path bindings/python/Cargo.toml
+maturin develop --manifest-path bindings/python/Cargo.toml --locked
 python -m unittest discover -s bindings/python/tests -v
 ```
 
 构建发行文件：
 
 ```bash
-maturin build --release --manifest-path bindings/python/Cargo.toml --out dist
+maturin build --release --locked \
+  --manifest-path bindings/python/Cargo.toml --out dist
 maturin sdist --manifest-path bindings/python/Cargo.toml --out dist
 ```
 
