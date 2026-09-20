@@ -1,6 +1,6 @@
 {
   "name": "@spensercai/qimen-rs",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Rust-powered BaZi and hour-school Chai Bu rotating Qimen Dunjia charts",
   "license": "MIT",
   "main": "index.cjs",

@@ -26,6 +26,13 @@ jobs:
         with:
           go-version: '1.26'
           cache: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Validate unified package versions and release decisions
+        run: |
+          python scripts/release.py validate
+          python -m unittest discover -s scripts/tests -v
       - name: Install pinned official workflow validator
         run: go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
       - run: actionlint
@@ -177,6 +184,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
       - uses: actions/setup-node@v7
         with:
           node-version: '22'
@@ -193,6 +203,7 @@ jobs:
           wasm-pack build bindings/wasm --target nodejs --out-dir pkg-node --release -- --locked
           node bindings/wasm/tests/smoke.cjs
           wasm-pack build bindings/wasm --target web --out-dir pkg --scope spensercai --release -- --locked
+          python scripts/release.py wasm-metadata bindings/wasm/pkg
       - uses: actions/upload-artifact@v7
         with:
           name: wasm-package

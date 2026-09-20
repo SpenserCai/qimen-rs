@@ -214,6 +214,36 @@ async fn all_legacy_handshakes_remain_compatible() -> TestResult {
     Ok(())
 }
 
+#[tokio::test]
+async fn executable_defaults_to_stdio_and_keeps_stdout_protocol_only() -> TestResult {
+    let mut process = tokio::process::Command::new(env!("CARGO_BIN_EXE_qimen-mcp"))
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .kill_on_drop(true)
+        .spawn()?;
+    let transport = (
+        process.stdout.take().expect("stdout"),
+        process.stdin.take().expect("stdin"),
+    );
+    let client = tokio::time::timeout(
+        Duration::from_secs(10),
+        TestClient(PROTOCOL_VERSION).serve_with_lifecycle(
+            transport,
+            ClientLifecycleMode::Discover {
+                preferred_versions: vec![PROTOCOL_VERSION],
+            },
+        ),
+    )
+    .await??;
+    assert_eq!(client.list_tools(None).await?.tools.len(), 2);
+    client.cancel().await?;
+    let output = tokio::time::timeout(Duration::from_secs(5), process.wait_with_output()).await??;
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    Ok(())
+}
+
 #[test]
 fn tool_schemas_and_capabilities_describe_read_only_local_calculations() {
     let server = QimenServer;

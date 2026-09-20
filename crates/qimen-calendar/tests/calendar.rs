@@ -107,7 +107,7 @@ fn hko_2026_lunar_calendar_fixtures() -> Result<(), CalendarError> {
 
 #[test]
 fn all_supported_input_edges_allow_internal_timezone_crossovers() -> Result<(), CalendarError> {
-    for (year, month, day, hour) in [(1900, 1, 1, 0), (2100, 12, 31, 23)] {
+    for (year, month, day, hour) in [(1, 1, 1, 0), (9999, 12, 31, 23)] {
         for offset in [-840, 840] {
             let mut request = CalendarRequest::new(year, month, day, hour);
             request.utc_offset_minutes = offset;
@@ -120,8 +120,8 @@ fn all_supported_input_edges_allow_internal_timezone_crossovers() -> Result<(), 
 #[test]
 fn invalid_inputs_are_errors() {
     for (year, month, day, hour) in [
-        (1899, 1, 1, 0),
-        (2101, 1, 1, 0),
+        (0, 1, 1, 0),
+        (10000, 1, 1, 0),
         (1900, 2, 29, 0),
         (2100, 2, 29, 0),
         (2024, 0, 1, 0),

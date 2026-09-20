@@ -258,7 +258,7 @@ fn malformed_and_out_of_range_inputs_return_errors() {
         r#"{"year":2026,"month":9,"day":18,"hour":24}"#,
         r#"{"year":2026,"month":9,"day":18,"hour":-1}"#,
         r#"{"year":2026,"month":9,"day":18,"hour":14,"utc_offset_minutes":841}"#,
-        r#"{"year":1899,"month":1,"day":1,"hour":0}"#,
+        r#"{"year":0,"month":1,"day":1,"hour":0}"#,
     ] {
         assert!(calculate_json(input).is_err(), "{input}");
     }

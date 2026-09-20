@@ -109,7 +109,7 @@ impl ChartInput {
 
 #[derive(Debug, Args)]
 pub(crate) struct Input {
-    /// 公历年 / Gregorian year (1900–2100)
+    /// 前推格里高利历年 / Proleptic Gregorian year (1–9999)
     #[arg(long)]
     year: i32,
     /// 公历月 / Gregorian month (1–12)

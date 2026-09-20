@@ -13,8 +13,8 @@ path = "src/main.rs"
 
 [dependencies]
 clap.workspace = true
-qimen-calendar = { path = "../../crates/qimen-calendar", version = "0.1.0" }
-qimen-core = { path = "../../crates/qimen-core", version = "0.1.0" }
+qimen-calendar = { path = "../../crates/qimen-calendar", version = "0.2.0" }
+qimen-core = { path = "../../crates/qimen-core", version = "0.2.0" }
 serde_json.workspace = true
 unicode-width.workspace = true
 

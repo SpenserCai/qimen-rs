@@ -20,7 +20,7 @@ extension-module = ["pyo3/extension-module"]
 
 [dependencies]
 pyo3 = { version = "0.29.2", features = ["abi3-py310"] }
-qimen-core = { path = "../../crates/qimen-core", version = "0.1.0" }
+qimen-core = { path = "../../crates/qimen-core", version = "0.2.0" }
 
 [lints]
 workspace = true

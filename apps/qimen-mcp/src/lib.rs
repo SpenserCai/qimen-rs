@@ -3,6 +3,8 @@
 //! Protocol negotiation and transports are owned by `rmcp`. This adapter only
 //! describes tools, decodes their arguments, and calls the public libraries.
 
+pub mod http;
+
 use std::borrow::Cow;
 
 use qimen_calendar::CalendarRequest;

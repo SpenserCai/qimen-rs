@@ -30,7 +30,7 @@ export interface ExtensionOptions {
 }
 
 export interface ChartRequest {
-  /** Gregorian year, 1900–2100 inclusive. */
+  /** Proleptic Gregorian year, 1–9999 inclusive. */
   year: number;
   month: number;
   day: number;

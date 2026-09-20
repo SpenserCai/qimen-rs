@@ -1,9 +1,9 @@
-use tyme4rs::tyme::solar::{SolarDay, SolarTerm as TymeSolarTerm, SolarTime};
+use tyme4rs::tyme::solar::SolarTerm as TymeSolarTerm;
 use tyme4rs::tyme::{Culture, Tyme};
 
+use crate::civil::{SECONDS_PER_DAY, from_seconds, julian_seconds, validate};
 use crate::{
-    CalendarError, CalendarRequest, CalendarResult, CivilDateTime, Cycle, DayBoundary, FourPillars,
-    LunarDate, SolarTerm,
+    CalendarError, CalendarRequest, CalendarResult, Cycle, DayBoundary, FourPillars, SolarTerm,
 };
 
 /// Calculates the Four Pillars and the surrounding solar terms.
@@ -14,7 +14,7 @@ use crate::{
 ///
 /// # Errors
 ///
-/// Returns [`CalendarError`] for dates outside 1900–2100, invalid Gregorian
+/// Returns [`CalendarError`] for dates outside 1–9999, invalid proleptic-Gregorian
 /// dates or times, or UTC offsets outside −14:00 through +14:00.
 ///
 /// # Examples
@@ -27,122 +27,76 @@ use crate::{
 /// # Ok::<(), qimen_calendar::CalendarError>(())
 /// ```
 pub fn calculate(request: &CalendarRequest) -> Result<CalendarResult, CalendarError> {
-    let local = validate(request)?;
-    // The upstream astronomy API expresses term instants as UTC+08:00 civil time.
-    // Normalize only the instant used for term/year/month comparisons, leaving
-    // the original local day/hour untouched.
-    let beijing = local.next(((480 - request.utc_offset_minutes) * 60) as isize);
-    let term = beijing.get_term();
-    let pillars = pillars(local, beijing, request.day_boundary);
-    let lunar = local.get_solar_day().get_lunar_day();
-    let lunar_month = lunar.get_lunar_month();
+    let local_seconds = validate(request)?;
+    // Upstream term Julian dates carry the provider's UTC+08:00 civil clock.
+    // Compare integral seconds so equality has the same meaning as the public
+    // second-resolution boundary. Civil conversions remain Gregorian throughout.
+    let beijing_seconds = local_seconds + i64::from(480 - request.utc_offset_minutes) * 60;
+    let term = current_term(beijing_seconds);
+    let local_day = local_seconds.div_euclid(SECONDS_PER_DAY);
 
     Ok(CalendarResult {
-        four_pillars: pillars,
+        four_pillars: pillars(request, local_day, &term),
         solar_term: convert_term(&term, request.utc_offset_minutes),
         next_solar_term: convert_term(&term.next(1), request.utc_offset_minutes),
-        lunar_date: LunarDate {
-            year: lunar.get_year() as i32,
-            month: lunar_month.get_month() as u32,
-            day: lunar.get_day() as u32,
-            is_leap_month: lunar_month.is_leap(),
-            name: lunar.to_string(),
-        },
+        lunar_date: crate::lunar::calculate(request.year, local_day)?,
     })
 }
 
-fn validate(request: &CalendarRequest) -> Result<SolarTime, CalendarError> {
-    if !(1900..=2100).contains(&request.year) {
-        return Err(CalendarError::UnsupportedYear(request.year));
+fn current_term(beijing_seconds: i64) -> TymeSolarTerm {
+    let date = from_seconds(beijing_seconds, 480);
+    let mut term = TymeSolarTerm::from_index(date.year as isize, (date.month * 2) as isize);
+    while beijing_seconds < julian_seconds(term.get_julian_day().get_day()) {
+        term = term.next(-1);
     }
-    if !(-840..=840).contains(&request.utc_offset_minutes) {
-        return Err(CalendarError::InvalidUtcOffset(request.utc_offset_minutes));
-    }
-    // Validate before entering the dependency: some upstream `new` paths call
-    // infallible constructors internally before validating the month.
-    for (field, value, minimum, maximum) in [
-        ("month", request.month, 1, 12),
-        ("hour", request.hour, 0, 23),
-        ("minute", request.minute, 0, 59),
-        ("second", request.second, 0, 59),
-    ] {
-        if !(minimum..=maximum).contains(&value) {
-            return Err(CalendarError::InvalidDateTime(format!(
-                "{field} must be between {minimum} and {maximum}, got {value}"
-            )));
+    // Far from the modern epoch a term can drift beyond the initial civil-month
+    // estimate. Compare both sides rather than assuming that estimate is a bound.
+    loop {
+        let next = term.next(1);
+        if beijing_seconds < julian_seconds(next.get_julian_day().get_day()) {
+            return term;
         }
+        term = next;
     }
-    let leap = request.year % 4 == 0 && (request.year % 100 != 0 || request.year % 400 == 0);
-    let mut days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][(request.month - 1) as usize];
-    if request.month == 2 && leap {
-        days += 1;
-    }
-    if !(1..=days).contains(&request.day) {
-        return Err(CalendarError::InvalidDateTime(format!(
-            "day must be between 1 and {days} in {}-{:02}, got {}",
-            request.year, request.month, request.day
-        )));
-    }
-    SolarTime::new(
-        request.year as isize,
-        request.month as usize,
-        request.day as usize,
-        request.hour as usize,
-        request.minute as usize,
-        request.second as usize,
-    )
-    .map_err(CalendarError::InvalidDateTime)
 }
 
-fn pillars(local: SolarTime, beijing: SolarTime, day_boundary: DayBoundary) -> FourPillars {
-    // Year/month are delegated together so all term boundaries share the exact
-    // same astronomical provider. Local day/hour do not inherit Beijing's clock.
-    let astronomical = beijing.get_sixty_cycle_hour();
-    // 2000-01-07 is the Jia-Zi anchor also used by tyme4rs::SixtyCycleDay.
-    let day_offset = local
-        .get_solar_day()
-        .subtract(SolarDay::from_ymd(2000, 1, 7));
-    let local_day = day_offset.rem_euclid(60) as u8;
-    let next_day = u8::from(local.get_hour() == 23);
+fn pillars(request: &CalendarRequest, local_day: i64, term: &TymeSolarTerm) -> FourPillars {
+    // The provider indexes winter solstice as 0 of the following term year.
+    // Li Chun (index 3) begins the pillar year; each pair of terms begins a month.
+    let pillar_year = term.get_year() as i64 - i64::from(term.get_index() < 3);
+    let month_index = (term.get_index() as i64 - 3).rem_euclid(24) / 2;
+    let year = Cycle::from_index((pillar_year - 4).rem_euclid(60) as u8);
+    // Five-tiger rule: Jia/Ji years begin with Bing-Yin.
+    let month = Cycle::from_index((pillar_year * 12 - 46 + month_index).rem_euclid(60) as u8);
+    // Gregorian 2000-01-07 has Julian day number 2451551 and is Jia-Zi.
+    let day_index = (local_day - 2_451_551).rem_euclid(60) as u8;
+    let next_day = u8::from(request.hour == 23);
     let day = Cycle::from_index(
-        local_day
-            + if day_boundary == DayBoundary::ZiStart {
+        day_index
+            + if request.day_boundary == DayBoundary::ZiStart {
                 next_day
             } else {
                 0
             },
     );
-    // Five-rat rule: Jia/Ji days begin with Jia-Zi, Yi/Geng with Bing-Zi, etc.
-    // Midnight follows the common late-Zi convention: keep the displayed day
-    // pillar but use the following day's Zi-hour stem across the complete hour.
-    let hour_day = Cycle::from_index(local_day + next_day);
-    let branch = local.get_hour().div_ceil(2) as u8 % 12;
+    // Five-rat rule and late-Zi convention: the hour stem uses the next day
+    // at 23:00 even when the displayed day changes at midnight.
+    let hour_day = Cycle::from_index(day_index + next_day);
+    let branch = request.hour.div_ceil(2) as u8 % 12;
     let hour = Cycle::from_index((hour_day.stem.index() % 5) * 12 + branch);
-
     FourPillars {
-        year: Cycle::from_index(astronomical.get_year().get_index() as u8),
-        month: Cycle::from_index(astronomical.get_month().get_index() as u8),
+        year,
+        month,
         day,
         hour,
     }
 }
 
 fn convert_term(term: &TymeSolarTerm, offset: i32) -> SolarTerm {
-    let local = term
-        .get_julian_day()
-        .get_solar_time()
-        .next(((offset - 480) * 60) as isize);
+    let seconds = julian_seconds(term.get_julian_day().get_day()) + i64::from(offset - 480) * 60;
     SolarTerm {
         index: term.get_index() as u8,
         name: term.get_name(),
-        start: CivilDateTime {
-            year: local.get_year() as i32,
-            month: local.get_month() as u32,
-            day: local.get_day() as u32,
-            hour: local.get_hour() as u32,
-            minute: local.get_minute() as u32,
-            second: local.get_second() as u32,
-            utc_offset_minutes: offset,
-        },
+        start: from_seconds(seconds, offset),
     }
 }

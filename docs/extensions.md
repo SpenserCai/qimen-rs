@@ -1,6 +1,6 @@
 # 可选扩展规则
 
-[中文首页](../README.md) · [基础盘算法](algorithm-sources.md) · [测试指南](validation.md)
+[中文首页](../README.md) · [基础盘算法](algorithm-sources.md) · [使用指南](usage.md)
 
 本页定义暗干、旺衰、十二长生、刑墓、门迫和日马的计算口径，不提供吉凶断语。
 
@@ -18,15 +18,15 @@
 | 门迫 | 门五行克所在宫五行 | 依现有八门落宫计算；宫克门另称受制，当前不输出该项 | 使用同样门宫五行关系时可复用 |
 | 日马 | 按日支求驿马 | 与已有时马同时存在，不改变时马或时空显示依据 | 按任意指定柱地支求马的底层映射可复用 |
 
-拆补、置闰主要解决定局问题；上述注记多以已经算好的盘与历法结果为输入，所以不应再各自计算一套节气或四柱。未来实现其他盘式时，仍需为其增加独立参考例，不能因为注记函数可复用就宣称已经支持那种盘式。
+拆补、置闰主要解决定局问题；上述注记以已确定的盘与历法结果为输入。不同盘式可以共享部分干支或五行关系，但宫序、星门与寄宫含义仍须一致；当前可用盘式仅为时家拆补转盘。
 
 ## 配置与结果
 
-扩展配置属于 `qimen-core`；`qimen-calendar` 不依赖这些术数注记。计算过程保持确定性，不读取当前时间、环境变量或网络。
+扩展在 `qimen-core` 的计算器或单次请求中配置，默认全部关闭；同一输入和规则会产生相同结果。
 
 - 默认关闭全部扩展；旧调用的基础盘结果保持其原有计算口径。
 - 调用者可以在库计算器初始化时选择扩展，也可以在单次计算参数中明确选择。
-- CLI 通过选项启用，MCP 通过工具调用参数启用；语言绑定传入相同配置，不实现第二套算法。
+- CLI 通过选项启用，MCP 通过工具调用参数启用；语言绑定使用同样的请求字段。
 - 输出保留所用规则、宫号、干所在盘层、源宫与寄宫身份；同一宫的两个干、两个地支不能压缩成无法对应的字符串。
 - 天地盘干都参与已开启的逐干注记；若同时开启暗干，构造出的暗干也参与，并以独立 `hidden` 盘层标明。这是明确的派生计算范围，不表示各流派都同样使用暗干的刑墓断法。
 - “未开启”“所选规则不适用此干”“已开启且未命中”是不同含义。中宫没有固定地支，长生分支为空，也不会命中某一墓支；八门在中宫不存在，不能伪造门迫。
@@ -80,7 +80,7 @@ JSON 中省略的扩展不计算；未知选项或规则必须报错，不能悄
 
 这里走的是数字九宫，包含中五，不是转盘八宫外环。暗干中五干也不自动复制到坤二。甲时没有可见“甲”干，必须先完成遁甲替代，再做重干检查。
 
-该分支及重干条件可直接核对维护者的 [qimen-go 实现](https://github.com/deminzhang/qimen-go/blob/4d3f58fa0f401b5b3a337f119138e99e90685dda/xuan/qimen.go#L318-L336) 和 [暗干分支](https://github.com/deminzhang/qimen-go/blob/4d3f58fa0f401b5b3a337f119138e99e90685dda/xuan/qimen.go#L517-L538)，选项含义见其 [规则定义](https://github.com/deminzhang/qimen-go/blob/4d3f58fa0f401b5b3a337f119138e99e90685dda/xuan/qimen_defs.go#L79-L85)。这是可复核的现代排盘约定，不据此断言古籍规定所有暗干只能这样排。
+该分支及重干条件可参照 [qimen-go 实现](https://github.com/deminzhang/qimen-go/blob/4d3f58fa0f401b5b3a337f119138e99e90685dda/xuan/qimen.go#L318-L336) 和 [暗干分支](https://github.com/deminzhang/qimen-go/blob/4d3f58fa0f401b5b3a337f119138e99e90685dda/xuan/qimen.go#L517-L538)，选项含义见其 [规则定义](https://github.com/deminzhang/qimen-go/blob/4d3f58fa0f401b5b3a337f119138e99e90685dda/xuan/qimen_defs.go#L79-L85)。这是可复核的现代排盘约定，不据此断言古籍规定所有暗干只能这样排。
 
 ### 流派对照：门下藏干（未实现）
 
@@ -177,31 +177,30 @@ JSON 中省略的扩展不计算；未知选项或规则必须报错，不能悄
 
 该三合驿马映射在[《三命通会》卷三“论驿马”](https://zh.wikisource.org/wiki/三命通會/卷三#论驿马)有逐组说明。日马取已经按调用者日界规则算出的日支，时马取时支；不能为了计算日马重新按另一种换日规则取日期。开启日马不更改基础盘中按时支标记的马星。
 
-## 边界与兼容性
+## 注记示例
 
-回归用例覆盖下列规则边界，参考数据来源见[测试资料](../crates/qimen-core/tests/fixtures/README.md)：
+以下示例说明规则的取值及不同配置的含义：
 
-| 用例 | 固定预期与目的 |
+| 场景 | 结果与含义 |
 | --- | --- |
 | 阳一局甲子时，值使在 1 | 甲以戊代，地盘 1 为戊，重干起中 5；暗干 1..9 为癸丁丙乙戊己庚辛壬 |
 | 阳一局乙丑时，值使在 2 | 乙与本位己不同，起 2；暗干 1..9 为丙乙戊己庚辛壬癸丁 |
-| 阴九局乙酉时 | 暗干 1..9 为壬辛庚己戊乙丙丁癸，检验阴遁逆飞与循环回绕 |
+| 阴九局乙酉时 | 暗干 1..9 为壬辛庚己戊乙丙丁癸，采用阴遁逆飞 |
 | 值使寄宫，时干等于中宫寄干但不同于本位干 | 不因寄干相等而误触发本位重干规则 |
-| 十二长生：壬申、壬子、壬辰 | 分别长生、帝旺、墓，可发现抄表偏移 |
-| 十二长生：丁酉、丁丑；戊寅、己酉 | 分别长生、墓；戊己均为长生，验证阴逆与土随火 |
+| 十二长生：壬申、壬子、壬辰 | 分别长生、帝旺、墓 |
+| 十二长生：丁酉、丁丑；戊寅、己酉 | 分别长生、墓；戊己均为长生，体现阴逆与土随火 |
 | 乙未与乙戌 | 十二长生分别养、墓；默认十干墓取戌，显式古典三奇墓取未，两种规则不可混并 |
 | 古典三奇墓检查六仪 | 墓支为空值，表示此规则不适用；六仪击刑仍照其独立规则计算 |
-| 六仪击刑六个真值及同干相邻宫 | 正反例配对，验证完整表而非仅当前盘的一项 |
 | 节气月界与农历月界 | 月令跟随 calendar 月柱；不随农历初一错误切换 |
 | 子初与午夜换日配置 | 日马跟随日柱的实际换日；时马仍依据时柱 |
-| 单开、全开、全关 | 验证独立开关、默认兼容性及无依赖字段缺失 |
+| 单开、全开、全关 | 仅返回已选择的注记；全部关闭时保持基础盘格式 |
 
 ## 参考实现与许可
 
 本页引用原典规则并自行整理公式，不复制现代注解的断语或上游生产代码。
 
 - `deminzhang/qimen-go`，提交 `4d3f58fa0f401b5b3a337f119138e99e90685dda`：[MIT，Copyright 2024 deminzhang](https://github.com/deminzhang/qimen-go/blob/4d3f58fa0f401b5b3a337f119138e99e90685dda/LICENSE)。参考范围为暗干的两个独立起法、遁甲替代与重干分支。
-- `3metaJun/3meta`，提交 `9be1238cbb7b0118826a689f9d3f8100284f6df3`：[MIT，Copyright 2025 3metaJun](https://github.com/3metaJun/3meta/blob/9be1238cbb7b0118826a689f9d3f8100284f6df3/LICENSE)。[暗干实现](https://github.com/3metaJun/3meta/blob/9be1238cbb7b0118826a689f9d3f8100284f6df3/src/qimen/calculator.ts)另以甲时、中宫干、值符值使同宫作分支；不能假设它与本项目重干法在所有寄宫案例都一致。其[常量](https://github.com/3metaJun/3meta/blob/9be1238cbb7b0118826a689f9d3f8100284f6df3/src/data/constants.ts)把亥卯未驿马列为申，与上述原典的巳不符；其[长生表](https://github.com/3metaJun/3meta/blob/9be1238cbb7b0118826a689f9d3f8100284f6df3/src/analysis/index.ts)中壬的多个支也与所选阳顺规则不符。因此只作差异研究，不把该软件的完整输出当作正确答案。
+- `3metaJun/3meta`，提交 `9be1238cbb7b0118826a689f9d3f8100284f6df3`：[MIT，Copyright 2025 3metaJun](https://github.com/3metaJun/3meta/blob/9be1238cbb7b0118826a689f9d3f8100284f6df3/LICENSE)。[暗干实现](https://github.com/3metaJun/3meta/blob/9be1238cbb7b0118826a689f9d3f8100284f6df3/src/qimen/calculator.ts)另以甲时、中宫干、值符值使同宫作分支；不能假设它与本项目重干法在所有寄宫案例都一致。其[常量](https://github.com/3metaJun/3meta/blob/9be1238cbb7b0118826a689f9d3f8100284f6df3/src/data/constants.ts)把亥卯未驿马列为申，与上述原典的巳不符；其[长生表](https://github.com/3metaJun/3meta/blob/9be1238cbb7b0118826a689f9d3f8100284f6df3/src/analysis/index.ts)中壬的多个支也与所选阳顺规则不符。这些差异说明同名注记仍需按具体公式辨别。
 
 ## English summary
 
@@ -211,4 +210,4 @@ The implemented hidden-stem convention flies the effective hour stem from the du
 
 Star strength follows the Yanbo convention; door and stem strength use ordinary Five-Phase relations. Palace and solar-month contexts are reported separately. The twelve growth stages use yang-forward/yin-backward traversal, with Wu following Bing and Ji following Ding. Tomb annotations default to that same ten-stem rule. An explicit `TraditionalThreeWonders` option instead uses Yi at Wei, Bing at Xu and Ding at Chou; other stems return no applicable tomb branch under that rule. It is never silently combined with Yi's growth-stage tomb at Xu, and does not alter the separate growth-stage calculation. Instrument punishment and door pressure retain their exact direction and plate identity. The day horse uses the computed day branch, while the existing hour horse continues to use the hour branch.
 
-Regression tests cover numeric flight, Jia substitution, hosted-stem identity, growth-stage traversal, tomb-rule applicability and day boundaries. Reference inputs and field mappings are maintained alongside the tests. Additional chart methods require their own applicability rules and reference cases.
+Named rules make numeric flight, Jia substitution, hosted-stem identity, growth stages and tomb applicability explicit. Day-boundary settings also affect the day horse. Other chart methods may use different palace mappings or conventions and are not implied by the availability of these annotations.
