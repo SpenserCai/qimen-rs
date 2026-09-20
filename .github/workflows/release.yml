@@ -2,6 +2,7 @@ name: Release
 
 on:
   push:
+    branches: [main]
     tags: ['v[0-9]*']
   workflow_dispatch:
 
@@ -9,29 +10,34 @@ permissions:
   contents: read
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release
   cancel-in-progress: false
 
 jobs:
   metadata:
-    name: Validate release tag
+    name: Read workspace release version
     runs-on: ubuntu-22.04
+    outputs:
+      publish: ${{ steps.plan.outputs.publish }}
+      version: ${{ steps.plan.outputs.version }}
+      tag: ${{ steps.plan.outputs.tag }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-      - name: Require a version tag and synchronized metadata
+      - name: Detect new version or explain why publishing is skipped
+        id: plan
         env:
-          RELEASE_TAG: ${{ github.ref_name }}
-          RELEASE_REF_TYPE: ${{ github.ref_type }}
-        run: |
-          test "$RELEASE_REF_TYPE" = tag
-          python scripts/release.py validate "$RELEASE_TAG"
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/release.py plan
 
   verify:
     name: Verify exact release commit
     needs: metadata
+    if: needs.metadata.outputs.publish == 'true'
     uses: ./.github/workflows/ci.yml
 
   binaries:
@@ -106,18 +112,31 @@ jobs:
 
   github-release:
     name: Publish downloadable applications
-    needs: [binaries, source]
+    needs: [metadata, binaries, source]
     runs-on: ubuntu-22.04
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
       - uses: actions/download-artifact@v8
         with:
           pattern: applications-*
           path: release
           merge-multiple: true
+      - name: Create immutable tag at the verified commit
+        env:
+          RELEASE_TAG: ${{ needs.metadata.outputs.tag }}
+        run: python scripts/release.py tag "$RELEASE_TAG"
       - uses: softprops/action-gh-release@v3
         with:
+          tag_name: ${{ needs.metadata.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          overwrite_files: false
           generate_release_notes: true
           fail_on_unmatched_files: true
           files: release/*
@@ -133,15 +152,15 @@ jobs:
       RUSTFLAGS: -D warnings
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Publish dependency order
         run: |
           test -n "$CARGO_REGISTRY_TOKEN"
-          cargo publish --locked -p qimen-calendar
-          cargo publish --locked -p qimen-core
-          cargo publish --locked -p qimen-cli
-          cargo publish --locked -p qimen-mcp
+          python scripts/publish-registries.py crates
 
   pypi:
     name: Publish Python packages
@@ -150,12 +169,20 @@ jobs:
     runs-on: ubuntu-22.04
     environment: pypi
     steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
       - uses: actions/download-artifact@v8
         with:
           pattern: python-*
           path: dist
           merge-multiple: true
+      - name: Verify published files and retain only missing original artifacts
+        id: artifacts
+        run: python scripts/publish-registries.py pypi dist
       - uses: pypa/gh-action-pypi-publish@release/v1
+        if: steps.artifacts.outputs.pending == 'true'
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
           packages-dir: dist/
@@ -171,6 +198,9 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
       - uses: actions/setup-node@v7
         with:
           node-version: '22'
@@ -191,14 +221,12 @@ jobs:
           node scripts/check-artifacts.cjs
           npm pack --dry-run --ignore-scripts
       - name: Publish platform packages, then root package
-        working-directory: bindings/node
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: 'true'
         run: |
           test -n "$NODE_AUTH_TOKEN"
-          npm run prepublish:native
-          npm publish --access public --provenance --ignore-scripts
+          python scripts/publish-npm.py bindings/node --native
 
   wasm:
     name: Publish WebAssembly package
@@ -210,6 +238,10 @@ jobs:
       contents: read
       id-token: write
     steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
       - uses: actions/setup-node@v7
         with:
           node-version: '22'
@@ -220,9 +252,8 @@ jobs:
           name: wasm-package
           path: wasm
       - name: Publish browser WebAssembly package
-        working-directory: wasm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           test -n "$NODE_AUTH_TOKEN"
-          npm publish --access public --provenance --ignore-scripts
+          python scripts/publish-npm.py wasm

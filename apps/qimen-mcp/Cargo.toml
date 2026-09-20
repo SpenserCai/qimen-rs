@@ -8,16 +8,20 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+axum = { version = "0.8", default-features = false, features = ["http1", "tokio"] }
 clap.workspace = true
-qimen-calendar = { path = "../../crates/qimen-calendar", version = "0.1.0", features = ["schema"] }
-qimen-core = { path = "../../crates/qimen-core", version = "0.1.0", features = ["schema"] }
-rmcp.workspace = true
+qimen-calendar = { path = "../../crates/qimen-calendar", version = "0.2.0", features = ["schema"] }
+qimen-core = { path = "../../crates/qimen-core", version = "0.2.0", features = ["schema"] }
+rmcp = { workspace = true, features = ["transport-streamable-http-server"] }
 serde.workspace = true
 serde_json.workspace = true
-tokio.workspace = true
+tokio = { workspace = true, features = ["net", "signal"] }
 
 [dev-dependencies]
-rmcp = { workspace = true, features = ["client"] }
+reqwest = { version = "0.13", default-features = false, features = ["json", "stream"] }
+rmcp = { workspace = true, features = ["client", "transport-streamable-http-client-reqwest"] }
+tokio = { workspace = true, features = ["process"] }
+tokio-util = "0.7"
 
 [lints]
 workspace = true

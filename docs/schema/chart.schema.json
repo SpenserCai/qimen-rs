@@ -191,7 +191,7 @@
       ]
     },
     "CalendarRequest": {
-      "description": "Gregorian input and explicit calculation conventions.\n\nMissing JSON `minute` and `second` default to zero, `utc_offset_minutes` to\n480 (UTC+08:00), and `day_boundary` to `zi_start`. Unknown fields are rejected\nso a misspelled convention cannot silently change the result.",
+      "description": "Proleptic Gregorian input and explicit calculation conventions.\n\nMissing JSON `minute` and `second` default to zero, `utc_offset_minutes` to\n480 (UTC+08:00), and `day_boundary` to `zi_start`. Unknown fields are rejected\nso a misspelled convention cannot silently change the result.",
       "type": "object",
       "properties": {
         "day": {
@@ -238,7 +238,7 @@
           "default": 480
         },
         "year": {
-          "description": "Gregorian year, inclusive range 1900–2100.",
+          "description": "Proleptic Gregorian year, inclusive range 1–9999.",
           "type": "integer",
           "format": "int32"
         }
@@ -412,7 +412,7 @@
           "format": "int32"
         },
         "year": {
-          "description": "Gregorian year.",
+          "description": "Proleptic Gregorian year. Adjacent term timestamps can use 0 or 10000.",
           "type": "integer",
           "format": "int32"
         }
@@ -1133,7 +1133,7 @@
       ]
     },
     "LunarDate": {
-      "description": "Chinese lunar calendar label for the supplied local Gregorian date.\n\nThis is the conventional Chinese calendar date conversion, not an\nindependent astronomical lunar calendar recalculated for the input timezone.",
+      "description": "Modern Chinese lunar-calendar rules applied to the local Gregorian date.\n\nMonths begin on the Beijing civil date containing an astronomical new moon.\nWinter solstice belongs to month 11; a thirteen-month winter cycle uses its\nfirst month without a principal term as the leap month. These rules are\nextended before their historical adoption and into the future. This is not\na reconstruction of ancient calendar reforms or a lunar calendar recalculated\nfor the request's timezone.",
       "type": "object",
       "properties": {
         "day": {
@@ -1157,7 +1157,7 @@
           "type": "string"
         },
         "year": {
-          "description": "Lunar calendar year.",
+          "description": "Lunar calendar year; early input dates in year 1 can belong to year 0.",
           "type": "integer",
           "format": "int32"
         }

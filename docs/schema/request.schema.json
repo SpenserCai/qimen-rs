@@ -52,7 +52,7 @@
       "default": 480
     },
     "year": {
-      "description": "Gregorian year, inclusive range 1900–2100.",
+      "description": "Proleptic Gregorian year, inclusive range 1–9999.",
       "type": "integer",
       "format": "int32"
     }

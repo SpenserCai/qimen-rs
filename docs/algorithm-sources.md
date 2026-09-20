@@ -1,6 +1,6 @@
 # 基础盘算法与参考资料
 
-[中文首页](../README.md) · [扩展规则](extensions.md) · [测试指南](validation.md)
+[中文首页](../README.md) · [扩展规则](extensions.md) · [使用指南](usage.md)
 
 本项目的默认计算口径为：**时家、拆补、转盘，中五固定寄坤，天禽随天芮**。它是可复现的算法约定，不代表所有奇门流派只有一种排法。飞盘、置闰、茅山及其他寄宫方法不属于当前默认算法。可选注记使用独立的配置和结果字段。
 
@@ -8,16 +8,16 @@
 
 ## 来源与版本
 
-参考实现固定到以下提交，以便复现规则比较和追溯来源。它们不作为运行时依赖；项目自行实现下文定义的算法。
+下列资料用于说明算法来源及流派之间的约定。引用链接指向对应版本，资料本身不是运行时依赖。
 
 | 来源 | 固定版本 | 参考范围 | 许可与使用方式 |
 | --- | --- | --- | --- |
-| [deminzhang/qimen-go](https://github.com/deminzhang/qimen-go/tree/4d3f58fa0f401b5b3a337f119138e99e90685dda) | `4d3f58fa0f40` | `xuan/qimen.go`、`xuan/qimen_defs.go`、`xuan/qm_test.go` | [MIT](https://github.com/deminzhang/qimen-go/blob/4d3f58fa0f401b5b3a337f119138e99e90685dda/LICENSE)，Copyright 2024 deminzhang；算法交叉参照 |
-| [Taogram/taobi](https://github.com/Taogram/taobi/tree/0be843be2190b5525d4591f843062a40dfc8b37b) | `0be843be2190` | [排盘实现](https://github.com/Taogram/taobi/blob/0be843be2190b5525d4591f843062a40dfc8b37b/src/pojo/taobi/TheArtOfBecomingInvisible.js)、星盘与初始化测试 | [MPL-2.0](https://github.com/Taogram/taobi/blob/0be843be2190b5525d4591f843062a40dfc8b37b/LICENSE)；仅参考算法和比较，不复制或翻译其实现 |
-| [kentang2017/kinqimen](https://github.com/kentang2017/kinqimen/tree/e6680ac4ca0b0da5ce3fe637e05f9fc32066ec5a) | `e6680ac4ca0b` | `config.py`、`kinqimen.py`、相关问题记录 | 固定版本的许可文件未确认；仅作算法研究，不复制代码 |
-| [3metaJun/3meta](https://github.com/3metaJun/3meta/tree/9be1238cbb7b0118826a689f9d3f8100284f6df3) | `9be1238cbb7b` | `src/qimen/calculator.ts`、`src/data/constants.ts` | 仅作差异审查；不作为默认中宫规则的基准 |
+| [deminzhang/qimen-go](https://github.com/deminzhang/qimen-go/tree/4d3f58fa0f401b5b3a337f119138e99e90685dda) | `4d3f58fa0f40` | `xuan/qimen.go`、`xuan/qimen_defs.go` | [MIT](https://github.com/deminzhang/qimen-go/blob/4d3f58fa0f401b5b3a337f119138e99e90685dda/LICENSE)，Copyright 2024 deminzhang；算法交叉参照 |
+| [Taogram/taobi](https://github.com/Taogram/taobi/tree/0be843be2190b5525d4591f843062a40dfc8b37b) | `0be843be2190` | [排盘实现](https://github.com/Taogram/taobi/blob/0be843be2190b5525d4591f843062a40dfc8b37b/src/pojo/taobi/TheArtOfBecomingInvisible.js) | [MPL-2.0](https://github.com/Taogram/taobi/blob/0be843be2190b5525d4591f843062a40dfc8b37b/LICENSE)；仅参考算法和比较，不复制或翻译其实现 |
+| [kentang2017/kinqimen](https://github.com/kentang2017/kinqimen/tree/e6680ac4ca0b0da5ce3fe637e05f9fc32066ec5a) | `e6680ac4ca0b` | `config.py`、`kinqimen.py` | 固定版本的许可文件未确认；仅作算法研究，不复制代码 |
+| [3metaJun/3meta](https://github.com/3metaJun/3meta/tree/9be1238cbb7b0118826a689f9d3f8100284f6df3) | `9be1238cbb7b` | `src/qimen/calculator.ts`、`src/data/constants.ts` | 流派差异参照；采用不同中宫规则 |
 
-`qimen-go` 的转盘分支和 `taobi` 的排盘步骤是主要程序参照。两者对局表、外环、星门旋转、旬首和值使飞宫有共同规则，表示方式和寄宫展示仍需独立核验。
+`qimen-go` 的转盘分支和 `taobi` 的排盘步骤给出了局表、外环、星门旋转、旬首和值使飞宫的共同规则。不同实现的字段名称及寄宫展示方式可能不同，以下公式明确本项目的取值。
 
 [FateMaster 的公开排盘说明](https://www.fatemaster.ai/en/guides/qimen-dunjia)给出了相同主干步骤，可辅助检查术语：时干为甲时用本旬所遁仪、值使从旬首原宫在九宫计步、天禽随芮携带中宫干。该说明用于术语和步骤对照。
 
@@ -25,9 +25,19 @@
 
 ## 时间与计算边界
 
+0.1.0 支持公历 1900–2100 年；0.2.0+ 扩展到公元 1–9999 年，统一使用前推格里高利历。历史日期换算、边界输出及天文精度含义见[时间说明](usage.md#历史日期与远期日期)。
+
 输入首先明确时区偏移、日界和时间口径，再计算四柱。年柱按立春交节瞬间切换，月柱按十二节的交节瞬间切换；奇门定局使用全部二十四节气。不能用固定公历日期代替交节时刻，不能将农历初一当作月柱边界。
 
 拆补使用**排盘时刻正在生效的节气**，不是符头发生日期的节气。节气切换时即使仍在同一时辰，局数也可能改变。日界选择影响日柱、时柱和三元，必须保留在输入及输出约定中。
+
+### 农历日期
+
+0.2.0+ 将现行定气、定朔规则用于整个输入范围。朔日按 UTC+08:00 日界确定，冬至所在月编号十一月；相邻冬至月之间若有十三个月，首个不含中气的月为闰月。年、月、日标签按这一月序连续排列。
+
+朔日和中气的含义可参阅香港天文台的[农历介绍](https://www.hko.gov.hk/en/gts/time/lunarcal.htm)及[闰月说明](https://www.hko.gov.hk/tc/forecaster_blog/fb_20170201.htm)；十二或十三个月的判定顺序及完整月序规则见[现代中国历规则](https://ytliu0.github.io/ChineseCalendar/rules.html)。
+
+农历结果对应输入的公历年月日，不随用户的 UTC 偏移另建一套地方农历。这一统一计算口径不等同于复原各朝代实际颁行的历法；近代历史历表也可能采用不同的日界，使朔日相差一天。与历史文献日期对照时应区分两者。天文朔时可参照 [NASA 月相表](https://eclipse.gsfc.nasa.gov/phase/phases1901.html)，该表采用 UT，比较民用日期时需要换算到本项目的固定 +08:00 口径。
 
 ## 三元与局数
 
@@ -132,11 +142,11 @@
 | 亥、卯、未 | 巳 | 4 |
 | 巳、酉、丑 | 亥 | 6 |
 
-## 可手工复核的规则案例
+## 排盘示例
 
-以下案例按本页公式逐项推导，用于说明中宫、寄干和环序规则；外部参考盘的数据来源另见测试资料。
+以下示例展示中宫、寄干和环序的计算方式。局数与时柱给定时，盘层可按前述公式直接推导。
 
-| 局与时柱 | 值符 | 值使 | 关键检查 |
+| 局与时柱 | 值符 | 值使 | 说明 |
 | --- | --- | --- | --- |
 | 阳一局、甲子 | 天蓬落 1 | 休门落 1 | 星、门、天盘均伏吟；甲以戊代 |
 | 阳一局、乙丑 | 天蓬落 9 | 休门落 2 | 天芮、天禽同落 8；天盘 8 宫己、寄壬 |
@@ -158,17 +168,14 @@
 | 8 | 丙 | 己、寄壬 | 天芮、天禽 | 景 | 玄武 |
 | 9 | 乙 | 戊 | 天蓬 | 开 | 值符 |
 
-## 参考案例
+## 流派与显示差异
 
-基础盘测试包含阴遁与阳遁的外部参考案例，以及按本页公式推导的中宫、寄干和环序案例。各案例的输入、来源、字段转录和名称映射保存在[测试资料](../crates/qimen-core/tests/fixtures/README.md)。
+同为“时家转盘”，不同实现仍可能采用不同的中宫寄宫、八神异名或暗干算法：
 
-比较结果前需统一时间、UTC 偏移、日界、定局与寄宫约定。验证范围以参考资料明确提供的字段为限；四柱、局数或结构不变量的单项一致性不代表整盘的独立验证。测试组织及复现方式见[测试指南](validation.md)。
+- 本项目中五固定寄坤二；其他方法可能按阴阳遁分别寄艮、寄坤。
+- 值使从旬首原宫计步，落中之后寄宫；将起点中五提前改成坤二会得到不同的落宫。
+- 八神使用白虎、玄武，不在阳遁中替换为勾陈、朱雀。
+- 天禽的中宫本位与随芮落宫分别表达；寄干不占用另一个地盘宫位。
+- 暗干是可选的独立盘层，所选方法见[扩展规则](extensions.md#暗干)。
 
-## 已识别的参考实现差异
-
-- `kinqimen/config.py` 的 `yin_eightgua_order` 为 `艮乾兑坤离巽震坎`，并非本项目外环的严格逆序；代码中阳遁还使用勾陈、朱雀。默认规则不能直接照搬。
-- `3meta/src/qimen/calculator.ts` 中，值符目标中宫寄坤，值使目标中宫却阳寄艮、阴寄坤；值使计步起点也先将旬首中宫改成坤宫。这与本项目固定寄坤、原宫起步约定不同。
-- `qimen-go` 的数据展示保留中宫天禽和中宫干；比较时必须规范化寄宫字段，不能用输出字符串位置代替逻辑九星归属。
-- `taobi` 部分步骤仍带 TODO 或未核验标记，部分测试仅测单旬、且有 `circle.pop()`；不能把上游测试通过等同于覆盖全部十八局、六十时柱与时间边界。
-
-长期回归应分别覆盖历法、二十四节气边界、十八局乘六十时柱的纯排盘组合、寄宫不变量及外部整盘案例。若外部数据与当前规则冲突，先保留双方输入和差异，再判断是流派差异还是实现错误，不以更新快照消除失败。
+对盘时请先统一这些约定，以及公历日期、UTC 偏移、日界和真太阳时设置。相同术语或相似界面并不一定代表相同算法。

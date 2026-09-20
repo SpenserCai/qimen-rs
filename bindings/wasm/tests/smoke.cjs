@@ -20,6 +20,19 @@ for (const invalid of [null, undefined, [], '2024-02-10']) {
 }
 assert.throws(() => wasm.calculateJson('{'));
 
+// These ordinals also exercise integer date conversion on 32-bit wasm32.
+for (const [year, month, day, expected] of [
+  [1, 1, 1, 15], [24, 1, 28, 42], [1070, 1, 1, 39],
+  [1582, 10, 5, 0], [1582, 10, 14, 9], [9999, 12, 31, 53],
+]) {
+  const result = wasm.calculate({ year, month, day, hour: 12 });
+  assert.equal(result.calendar.four_pillars.day.index, expected);
+  assert.equal(result.palaces.length, 9);
+}
+for (const year of [0, 10000]) {
+  assert.throws(() => wasm.calculate({ year, month: 1, day: 1, hour: 0 }));
+}
+
 // User-supplied software screenshot: 2026-09-18 18:15, UTC+08:00.
 const reference = { year: 2026, month: 9, day: 18, hour: 18, minute: 15 };
 const allRules = {

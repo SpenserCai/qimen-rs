@@ -16,12 +16,14 @@
 | `crates/qimen-calendar` | 公历校验、节气、干支、时间与换日约定 | 不依赖奇门、应用或绑定 |
 | `crates/qimen-core` | 定局、九宫、盘式、序列化公共结果 | 依赖 calendar |
 | `apps/qimen-cli` | 命令行参数、中文排盘展示、JSON 输出 | 调用库，不复制算法 |
-| `apps/qimen-mcp` | rmcp 工具与 stdio 协议适配 | 调用库，不复制算法 |
+| `apps/qimen-mcp` | rmcp 工具、stdio 与 Streamable HTTP 传输 | 调用库，不复制算法 |
 | `bindings/python` | PyO3 + maturin Python 包 | 调用 core |
 | `bindings/node` | napi-rs Node-API 包 | 调用 core |
 | `bindings/wasm` | wasm-bindgen 浏览器 / JS 包 | 调用 core |
 
-核心库保持确定性：不读取系统当前时间、环境时区、网络或用户配置文件；调用者显式提供输入。库错误使用类型，CLI / MCP / 语言绑定负责映射。不要在 library 中退出进程或向 stdout 写日志。MCP stdout 仅可输出协议消息。
+历法对外统一前推格里高利历、公元 1–9999 年；内部隔离 tyme4rs 的混合历和年边界，不改变输入含义；农历月序按现行定气定朔规则统一前推/外推，天文求解仍由上游提供，不重新采用不连续的历史闰月表。跨边界节气可含年份 0 / 10000，农历可含年份 0。扩大计算范围不能扩大天文精度或历史历法复原承诺。
+
+核心库保持确定性：不读取系统当前时间、环境时区、网络或用户配置文件；调用者显式提供输入。库错误使用类型，CLI / MCP / 语言绑定负责映射。不要在 library 中退出进程或向 stdout 写日志。stdio MCP stdout 仅可输出协议消息；HTTP 入口负责监听、Host / Origin 校验及退出，不在工具实现中重复传输逻辑。
 
 可选注解集中于 `qimen-core::extensions`，由 `ExtensionOptions` 显式启用，默认全关；初始化配置使用 `Calculator`，跨语言请求使用 `CalculationRequest`。历法层不接收奇门扩展配置，应用不复制注解公式。每项结果必须记录规则，不能把古典三奇入墓和阴阳顺逆长生墓混为一谈。基础盘不随注解开关改变；新盘式复用注解前应逐项核验适用条件，规则来源集中在 `docs/extensions.md`。
 
@@ -42,7 +44,7 @@
 - 算法改动必须带能区分正确与错误实现的回归例。不要只比较实现与它自己生成的结果；记录例子的来源、输入及流派参数。
 - 历法边界覆盖交节前后、立春换年、节令换月、子时 / 午夜换日、闰日、日期范围端点、跨时区等价时刻。奇门覆盖阴阳遁、三元、九宫顺序、值符值使、旬首遁干、天禽寄宫、空亡及驿马等实际输出字段。
 - 截图或第三方盘有分歧时保留最小输入和差异，先查计算约定，不能直接改 golden 让测试变绿。
-- 绑定验证实际 Python wheel 导入、Node 原生加载与 WASM 执行；MCP 验证初始化、工具发现、调用、错误和协议版本协商。
+- 绑定验证实际 Python wheel 导入、Node 原生加载与 WASM 执行；MCP 两种传输均验证工具发现、调用、错误与协议协商；HTTP 另覆盖会话、Host / Origin 和退出。
 
 ## 必过命令
 
@@ -60,7 +62,17 @@ npm run build -- -- --locked
 npm test
 ```
 
-`check-quality.py` 执行格式、全 workspace check、Clippy、Rust 测试和 rustdoc，并对警告报错。Python / Node / WASM 通过各自运行时测试，不使用 `cargo test --workspace --all-features`：PyO3 的 `extension-module` 供动态模块使用，不适用于普通 Rust 测试可执行文件链接。WASM 完整命令见 `CONTRIBUTING.md`。
+`check-quality.py` 执行格式、全 workspace check、Clippy、Rust 测试和 rustdoc，并对警告报错。Python / Node / WASM 通过各自运行时测试，不使用 `cargo test --workspace --all-features`：PyO3 的 `extension-module` 供动态模块使用，不适用于普通 Rust 测试可执行文件链接。WASM 在仓库根目录运行：
+
+```sh
+rustup target add wasm32-unknown-unknown
+cargo install wasm-pack --locked
+wasm-pack build bindings/wasm --target nodejs --out-dir pkg-node --release -- --locked
+node bindings/wasm/tests/smoke.cjs
+wasm-pack build bindings/wasm --target web --out-dir pkg --scope spensercai --release -- --locked
+```
+
+`python scripts/check-schemas.py` 检查结构一致性；生成入口为 `crates/qimen-core/examples/schema.rs`。最低编译器验证以根 `rust-version` 为准。`scripts/compare-calendar.py` 提供跨实现历法差分；lunar-python 与 tyme4rs 同源，不能把差分当作独立天文精度证明。详细测试来源保留在 `tests/fixtures/`，执行日志留在 CI / PR。
 
 CI 必须通过 Linux / Windows / macOS 与所有声明的二进制目标。不能把“已写 CI”报告成“CI 已通过”；无法验证时明确列出未运行项与原因。提交前检查 diff，保留其他协作者的修改；并行开发按目录分工，在共享 API 改动前同步接口。
 
@@ -68,8 +80,21 @@ CI 必须通过 Linux / Windows / macOS 与所有声明的二进制目标。不�
 
 默认 README 为中文，英文入口为 `README.en.md`。用户可见变化要同步双语说明；详细计算约定集中在 `docs/`，不要在应用与绑定内复制算法说明。
 
-公开文档描述稳定功能、规则与使用方式，不记录开发对话、逐次测试结果或审查过程；测试来源和字段转录保存在测试目录，执行结果留在 CI / PR。架构图使用简短或分行标签，箭头明确表示依赖方向；中英文图示保持一致，修改后验证实际渲染。README 代码示例须可直接复制运行，不使用仅在 rustdoc 中隐藏的 `#` 行。
+除本文件外，公开 Markdown 面向使用者：安装、API、参数、结果和计算约定；贡献流程、门禁与发布设置集中在本文件。公开文档不记录开发对话、逐次测试结果或审查过程；测试来源和字段转录保存在测试目录，执行结果留在 CI / PR。架构图使用简短或分行标签，箭头明确表示依赖方向；中英文图示保持一致，修改后验证实际渲染。README 代码示例须可直接复制运行，不使用仅在 rustdoc 中隐藏的 `#` 行。
 
-发布只走版本标签工作流，规则见 `docs/releasing.md`。GitHub 可下载产物与 crates.io / PyPI / npm 发布开关独立；凭证仅放 GitHub Secrets。没有用户发布授权时，只完成代码、验证和可审阅的发布配置，不实际发布不可覆盖的包版本。
+统一版本源为根 `Cargo.toml` 的 `workspace.package.version`。运行 `python scripts/release.py set-version X.Y.Z` 同步本地依赖、Rust 锁文件和 Node manifests；Python / WASM / Rust 包继承项目版本。`python scripts/release.py validate` 是提交前与 CI 的一致性入口。软件包版本和 JSON Schema 版本独立。
+
+Release 工作流在新版本合入 `main` 后自动运行，也可在 Actions 中对 `main` 手动启动，无需手工打标签。完整质量检查与构建后，工作流创建 `vX.Y.Z` 并继续发布同一提交；已有版本跳过，既有标签不得移动。版本推进与合并可能触发正式发布，因此没有用户发布授权时只完成代码、验证和 PR，不把未授权的新版本合入发布分支。兼容的手工标签也须通过版本和提交来源校验。
+
+| 渠道 | Repository variable | Environment | Secret |
+| --- | --- | --- | --- |
+| crates.io | `PUBLISH_CRATES=true` | `crates-io` | `CARGO_REGISTRY_TOKEN` |
+| PyPI | `PUBLISH_PYPI=true` | `pypi` | `PYPI_API_TOKEN` |
+| Node.js npm | `PUBLISH_NPM=true` | `npm` | `NPM_TOKEN` |
+| WASM npm | `PUBLISH_WASM=true` | `npm` | `NPM_TOKEN` |
+
+开关放 Repository variables；凭证放 Environment secrets 或同名 Repository secrets。Environment 部署规则允许 `main`，若使用手工标签兼容路径也允许 `v*`。未开启的注册表跳过，GitHub Release 使用内置 `GITHUB_TOKEN`。npm token 需覆盖 scope 下主包、五个平台分包及 WASM 包，具有发布权限和 Bypass two-factor authentication；仅组织管理权限不足。令牌不得进入代码、日志或 PR。
+
+注册表发布不是跨渠道事务。失败时先核对原运行和各包实际状态，再通过原运行的 `Re-run failed jobs` 恢复；仅补齐同一提交的原始产物，不移动标签或重编译不同内容覆盖既有版本。napi 发布前必须确认五个平台产物齐全；本地检查 tarball 使用 `npm pack --dry-run --ignore-scripts`，不要让发布 lifecycle 在检查中执行。正式发布完成后确认各注册表版本、安装与实际调用，不能只以 job 成功代替产物可用。
 
 依赖升级通过 Dependabot / PR，保留锁文件。升级历法库要复核参考盘和交节边界，升级 rmcp 要核实当前稳定版及真实协商行为；协议版本字符串不能代替握手测试。

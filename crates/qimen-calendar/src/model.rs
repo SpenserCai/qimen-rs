@@ -35,7 +35,7 @@ const fn default_offset() -> i32 {
     480
 }
 
-/// Gregorian input and explicit calculation conventions.
+/// Proleptic Gregorian input and explicit calculation conventions.
 ///
 /// Missing JSON `minute` and `second` default to zero, `utc_offset_minutes` to
 /// 480 (UTC+08:00), and `day_boundary` to `zi_start`. Unknown fields are rejected
@@ -44,7 +44,7 @@ const fn default_offset() -> i32 {
 #[serde(deny_unknown_fields)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct CalendarRequest {
-    /// Gregorian year, inclusive range 1900–2100.
+    /// Proleptic Gregorian year, inclusive range 1–9999.
     pub year: i32,
     /// Gregorian month, 1–12.
     pub month: u32,
@@ -89,7 +89,7 @@ impl CalendarRequest {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct CivilDateTime {
-    /// Gregorian year.
+    /// Proleptic Gregorian year. Adjacent term timestamps can use 0 or 10000.
     pub year: i32,
     /// Gregorian month, 1–12.
     pub month: u32,
@@ -131,14 +131,18 @@ pub struct SolarTerm {
     pub start: CivilDateTime,
 }
 
-/// Chinese lunar calendar label for the supplied local Gregorian date.
+/// Modern Chinese lunar-calendar rules applied to the local Gregorian date.
 ///
-/// This is the conventional Chinese calendar date conversion, not an
-/// independent astronomical lunar calendar recalculated for the input timezone.
+/// Months begin on the Beijing civil date containing an astronomical new moon.
+/// Winter solstice belongs to month 11; a thirteen-month winter cycle uses its
+/// first month without a principal term as the leap month. These rules are
+/// extended before their historical adoption and into the future. This is not
+/// a reconstruction of ancient calendar reforms or a lunar calendar recalculated
+/// for the request's timezone.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct LunarDate {
-    /// Lunar calendar year.
+    /// Lunar calendar year; early input dates in year 1 can belong to year 0.
     pub year: i32,
     /// Lunar month number, 1–12.
     pub month: u32,
@@ -168,7 +172,7 @@ pub struct CalendarResult {
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
 pub enum CalendarError {
     /// The public, tested Gregorian year range was exceeded.
-    #[error("year must be between 1900 and 2100 inclusive, got {0}")]
+    #[error("year must be between 1 and 9999 inclusive, got {0}")]
     UnsupportedYear(i32),
     /// The supplied civil offset exceeds the accepted range.
     #[error("utc_offset_minutes must be between -840 and 840 inclusive, got {0}")]
@@ -176,4 +180,7 @@ pub enum CalendarError {
     /// An invalid Gregorian date or civil time was supplied.
     #[error("invalid Gregorian date or time: {0}")]
     InvalidDateTime(String),
+    /// The astronomical provider could not produce a consistent conversion.
+    #[error("calendar conversion failed: {0}")]
+    ConversionFailed(String),
 }

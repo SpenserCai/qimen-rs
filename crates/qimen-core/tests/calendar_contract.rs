@@ -51,3 +51,27 @@ fn solstice_switches_dun_at_the_term_instant_within_one_hour() -> Result<(), Err
     assert_eq!(before.calendar.four_pillars, at.calendar.four_pillars);
     Ok(())
 }
+
+#[test]
+fn full_range_endpoints_form_complete_charts_without_needing_a_previous_civil_day()
+-> Result<(), Error> {
+    // 拆补's 符头 uses the already calculated day-cycle index, so the first
+    // four civil dates must not be rejected merely because their 符头 is earlier.
+    for (year, month, day) in [(1, 1, 1), (1, 1, 2), (1, 1, 3), (1, 1, 4), (9999, 12, 31)] {
+        for offset in [-840, 840] {
+            for boundary in [DayBoundary::ZiStart, DayBoundary::Midnight] {
+                let mut request = ChartRequest::new(year, month, day, 23);
+                request.utc_offset_minutes = offset;
+                request.day_boundary = boundary;
+                let result = calculate(&request)?;
+                assert!((1..=9).contains(&result.ju));
+                assert_eq!(result.palaces.len(), 9);
+                assert_eq!(
+                    result.yuan_head.index,
+                    result.calendar.four_pillars.day.index / 5 * 5
+                );
+            }
+        }
+    }
+    Ok(())
+}
