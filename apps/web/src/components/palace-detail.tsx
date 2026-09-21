@@ -359,7 +359,7 @@ export function PalaceDetail({
           扩展注记<span>{Object.keys(chart.extensions ?? {}).length}</span>
         </button>
       </div>
-      <div className="detail-scroll">
+      <div className="detail-scroll" key={`${selected}-${tab}`}>
         {tab === "base" ? (
           <>
             <dl className="base-detail">
