@@ -129,6 +129,6 @@ Vercel 项目设置为 **Next.js、Node.js 22.x、Root Directory `apps/web`**，
 
 应用运行不需要业务 API key。ChatGPT 连接 Vercel 仅授予当前连接器相应访问，不会自动在 GitHub 配置部署 token；首次部署须确认实际账号 / 项目可访问。不要将 token、拉取的 `.vercel` 或 `.env` 文件签入仓库。部署前验证 Build Output 的 Next.js 框架、首页、指南、浏览器资源及 WASM 文件；部署后工作流必须对正式域名 `https://qimen-rs.vercel.app` 执行真实 WASM 参考盘浏览器检查，域名变更时同步该检查地址。上线检查失败时保留浏览器诊断，不能只报告上传成功。必要时用 Vercel promote / rollback 恢复已验证产物，不在故障期间修改库版本。
 
-Web 使用 Prettier 统一源码与配置格式，运行 `npm run format` 修正。升级 TypeScript / ESLint 时同时核对 Next.js、typescript-eslint 与规则插件的兼容范围，不通过关闭 lint 或忽略 peer dependencies 消除工具链错误。
+Web 使用 Prettier 统一源码与配置格式，运行 `npm run format` 修正。升级 TypeScript / ESLint 时同时核对 Next.js、typescript-eslint 与规则插件的兼容范围，不通过关闭 lint 或忽略 peer dependencies 消除工具链错误。`@types/node` 主版本与 Web 支持的最低 Node.js 版本保持一致，提升运行时基线时一并评估。Dependabot 只对明确不兼容的版本范围设置临时排除，继续接受兼容更新；相关上游工具链升级后重新核验并移除不再需要的排除。
 
 依赖升级通过 Dependabot / PR，保留锁文件。升级历法库要复核参考盘和交节边界，升级 rmcp 要核实当前稳定版及真实协商行为；协议版本字符串不能代替握手测试。

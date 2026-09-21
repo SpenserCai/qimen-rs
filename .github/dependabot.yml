@@ -22,6 +22,17 @@ updates:
     directory: /apps/web
     schedule:
       interval: weekly
+    ignore:
+      # Keep runtime types aligned with the supported Node.js 22 baseline.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+      # Remove after eslint-config-next's React and JSX plugins support ESLint 10.
+      - dependency-name: eslint
+        versions: ['10.x']
+      # TS 7.0 lacks the compiler API required by the current typescript-eslint.
+      # Reassess API and parser compatibility when a later minor is proposed.
+      - dependency-name: typescript
+        versions: ['7.0.x']
     groups:
       next-react:
         patterns: ['next', 'eslint-config-next', 'react', 'react-dom', '@types/react*']
