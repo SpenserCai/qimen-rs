@@ -60,7 +60,7 @@ console.log(chart.extensions?.day_horse?.horse);
 寄干保留来源及盘层，日马独立于时马。入墓另支持 `traditional_three_wonders`，
 只判断三奇；不适用的六仪返回 `null`，与“未入墓”的 `false` 有区别。
 全部选项和结果有 TypeScript 类型，JSON Schema 版本与项目版本分开；字段见[结果 Schema](../../docs/schema/chart.schema.json)。
-完整规则与适用范围见 [扩展约定](../../docs/extensions.md)。
+全部 key、规则 value 及含义见[扩展参数表](../../docs/extensions.md#请求-key-与-value)；返回字段与枚举见[结果速查](../../docs/extensions.md#结果字段速查)，计算口径与适用范围见同页规则说明。
 
 ## 平台支持
 

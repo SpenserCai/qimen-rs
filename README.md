@@ -1,6 +1,15 @@
 # qimen-rs
 
-[English](README.en.md) · [Web 排盘](apps/web/README.md) · [安装](docs/installation.md) · [使用指南](docs/usage.md) · [算法约定](docs/algorithm-sources.md) · [扩展规则](docs/extensions.md)
+[![crates.io](https://img.shields.io/crates/v/qimen-core?logo=rust&label=crates.io)](https://crates.io/crates/qimen-core)
+[![PyPI](https://img.shields.io/pypi/v/qimen-rs?logo=python&label=PyPI)](https://pypi.org/project/qimen-rs/)
+[![npm Node.js](https://img.shields.io/npm/v/%40spensercai%2Fqimen-rs?logo=npm&label=Node.js)](https://www.npmjs.com/package/@spensercai/qimen-rs)
+[![npm WASM](https://img.shields.io/npm/v/%40spensercai%2Fqimen-wasm?logo=webassembly&label=WASM)](https://www.npmjs.com/package/@spensercai/qimen-wasm)
+
+[![CI](https://img.shields.io/github/actions/workflow/status/SpenserCai/qimen-rs/ci.yml?branch=main&label=CI)](https://github.com/SpenserCai/qimen-rs/actions/workflows/ci.yml)
+[![docs.rs](https://img.shields.io/docsrs/qimen-core?logo=rust&label=docs.rs)](https://docs.rs/qimen-core/latest/qimen_core/)
+[![MIT License](https://img.shields.io/github/license/SpenserCai/qimen-rs)](LICENSE)
+
+[English](README.en.md) · [在线排盘](https://qimen-rs.vercel.app) · [安装](docs/installation.md) · [使用指南](docs/usage.md) · [算法约定](docs/algorithm-sources.md) · [扩展参数](#可选扩展)
 
 以 Rust 实现的八字与奇门遁甲排盘库。输入公历年月日时分秒，得到具有明确历法和流派约定的结构化结果。默认采用 **时家奇门、拆补法、转盘、中五寄坤、天禽随芮**。
 
@@ -42,7 +51,7 @@ qimen bazi --year 2026 --month 9 --day 18 --hour 15
 
 ### Web 排盘
 
-`apps/web` 提供开箱即用的可视化应用。输入公历时间与 UTC 偏移，短暂的罗盘动效结束后显示八字和九宫盘；选择宫位可展开天盘、地盘、九星、八门、八神和扩展注记。计算由浏览器内的 WASM 完成。桌面三栏随窗口高度自适应，较长的宫位详情在栏内滚动；窄屏按顺序排列。
+[打开在线排盘](https://qimen-rs.vercel.app)，无需安装。输入公历时间与 UTC 偏移，短暂的罗盘动效结束后显示八字和九宫盘；选择宫位可展开天盘、地盘、九星、八门、八神和扩展注记。计算由浏览器内的 WASM 完成。桌面三栏随窗口高度自适应，较长的宫位详情在栏内滚动；窄屏按顺序排列。
 
 使用 Node.js 22+ 在本地启动：
 
@@ -67,6 +76,28 @@ fn main() -> Result<(), qimen_core::Error> {
 }
 ```
 
+### Python
+
+```python
+from qimen_rs import calculate
+
+chart = calculate({"year": 2026, "month": 9, "day": 18, "hour": 18})
+print(chart["calendar"]["four_pillars"])
+print(chart["palaces"])
+```
+
+### Node.js
+
+```javascript
+const { calculate } = require('@spensercai/qimen-rs');
+
+const chart = calculate({ year: 2026, month: 9, day: 18, hour: 18 });
+console.log(chart.calendar.four_pillars);
+console.log(chart.palaces);
+```
+
+也支持 ESM：`import { calculate } from '@spensercai/qimen-rs'`。浏览器使用独立的 [WASM 包](bindings/wasm/README.md)，初始化后调用相同的计算接口。
+
 ### JSON
 
 Python、JavaScript、MCP 的排盘工具和 Rust `calculate_json` 使用相同的请求字段：
@@ -88,7 +119,35 @@ Python、JavaScript、MCP 的排盘工具和 Rust `calculate_json` 使用相同�
 
 ### 可选扩展
 
-扩展默认全部关闭。Rust 可在初始化计算器时选择规则，也可通过 `calculate_with_options` 为单次计算传参：
+扩展默认全部关闭。JSON、Python、Node.js、WASM 和 MCP `paipan` 请求共用 `extensions` 对象：**key 选择注记，value 选择计算规则**，不是布尔开关。
+
+| `extensions` key | 可选 value | 含义 |
+| --- | --- | --- |
+| `hidden_stems` | `duty_door_hour_stem_with_center_fallback` | 暗干：值使宫起时干，重本位地盘干时改从中五起；甲时先替换为旬首遁干 |
+| `strength` | `classical_stars_and_five_elements` | 旺衰：九星用烟波法，门、干用一般五行法；分别评价落宫与节气月令 |
+| `growth_stages` | `yang_forward_yin_reverse_fire_earth` | 十二长生：阳顺阴逆、土随火；每个宫支分别返回 |
+| `punishments` | `six_instrument_branches` | 六仪击刑：按六仪对应的刑支判断，保留盘层与寄干身份 |
+| `tombs` | `growth_stage_fire_earth` | 十干按十二长生墓支判断，乙墓在戌；全开预设选用此规则 |
+| `tombs` | `traditional_three_wonders` | 古典三奇入墓：乙未、丙戌、丁丑；六仪不适用 |
+| `day_horse` | `day_branch_three_harmony` | 日马：按已计算日柱的日支三合取马，不改变基础盘时马 |
+| `door_pressure` | `door_controls_palace` | 门迫：门五行克落宫五行；宫克门不算门迫 |
+
+只传需要的 key；省略或设为 `null` 即关闭该项。`tombs` 的两个值二选一，不能同时使用。基础 `bazi` 工具不接受扩展。
+
+```json
+{
+  "year": 2026,
+  "month": 9,
+  "day": 18,
+  "hour": 18,
+  "extensions": {
+    "day_horse": "day_branch_three_harmony",
+    "tombs": "traditional_three_wonders"
+  }
+}
+```
+
+Rust 可在初始化计算器时选择规则，也可通过 `calculate_with_options` 为单次计算传参：
 
 ```rust
 use qimen_core::{Calculator, ChartRequest, DayHorseRule, ExtensionOptions};
@@ -112,7 +171,7 @@ qimen paipan --year 2026 --month 9 --day 18 --hour 18 \
   --extensions hidden-stems,day-horse --json
 ```
 
-扩展结果写入 `chart.extensions`，保留规则名、盘层与寄干身份，不改变基础盘或时马；未启用时省略该字段。它们是常见辅助规则，具体算法存在流派差异，详见[扩展规则](docs/extensions.md)。
+扩展结果写入 `chart.extensions`，保留规则名、盘层与寄干身份，不改变基础盘或时马；未启用时省略该字段。CLI 使用连字符名称，例如 `day-horse`；入墓另选规则时使用 `--extensions tombs --tomb-rule traditional-three-wonders`。完整的 [CLI / Rust 参数映射](docs/extensions.md#各接口参数对照)、[结果字段](docs/extensions.md#结果字段速查)和[枚举值含义](docs/extensions.md#结果枚举值)见扩展文档。规则的流派差异与公式也在该文档中说明。
 
 ### MCP
 

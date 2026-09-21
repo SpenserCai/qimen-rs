@@ -31,7 +31,40 @@
 - 天地盘干都参与已开启的逐干注记；若同时开启暗干，构造出的暗干也参与，并以独立 `hidden` 盘层标明。这是明确的派生计算范围，不表示各流派都同样使用暗干的刑墓断法。
 - “未开启”“所选规则不适用此干”“已开启且未命中”是不同含义。中宫没有固定地支，长生分支为空，也不会命中某一墓支；八门在中宫不存在，不能伪造门迫。
 
-具体参数名、可接受的枚举值与 JSON 结构以生成的 [请求 schema](schema/request.schema.json)、[结果 schema](schema/chart.schema.json) 和公共 Rust 类型为准。
+### 请求 key 与 value
+
+`extensions` 是一个对象：key 指定注记，value 是区分流派口径的规则字符串，不能用 `true` 或 `false` 代替。下表列出全部可用组合，JSON、Python 请求字典、Node.js / WASM 对象及 MCP `paipan` 工具参数使用相同拼写。
+
+| key | 可选 value | 含义 |
+| --- | --- | --- |
+| `hidden_stems` | `duty_door_hour_stem_with_center_fallback` | 值使宫起时干，阳顺阴逆飞布九宫；重本位地盘干时改从中五起，甲时先以旬首遁干代甲 |
+| `strength` | `classical_stars_and_five_elements` | 星用烟波法，门、干用一般五行法；分别返回落宫、节气月令两个参照下的状态 |
+| `growth_stages` | `yang_forward_yin_reverse_fire_earth` | 十二长生采用阳顺阴逆、戊随丙、己随丁，每个实际干与宫支分别计算 |
+| `punishments` | `six_instrument_branches` | 六仪击刑，按戊卯、己未、庚寅、辛午、壬辰、癸巳对应关系判断 |
+| `tombs` | `growth_stage_fire_earth` | 十干十二长生墓，乙墓在戌；`ExtensionOptions::all()` 和 CLI 全开预设采用此项 |
+| `tombs` | `traditional_three_wonders` | 古典三奇墓：乙未、丙戌、丁丑；六仪不适用，与上一项二选一 |
+| `day_horse` | `day_branch_three_harmony` | 根据已计算日柱的日支取三合驿马，遵循请求的换日规则 |
+| `door_pressure` | `door_controls_palace` | 仅判断门五行克落宫五行，反向的宫克门不属于此项 |
+
+省略 key 或将其设为 `null` 都表示关闭该项；`extensions: {}` 关闭全部扩展。JSON 没有 `all` 字符串预设，需明确填写所需项目。基础 `bazi` 工具只接受历法字段，不接受 `extensions`。精确类型见[请求 Schema](schema/request.schema.json)和[结果 Schema](schema/chart.schema.json)。
+
+### 各接口参数对照
+
+Rust 的 `ExtensionOptions` 字段名与 JSON key 相同，以 `Some(规则枚举)` 开启、`None` 关闭。CLI 则以 `--extensions` 后的逗号分隔列表选择注记。
+
+| JSON / Rust 字段 | CLI 扩展名 | Rust 规则枚举 |
+| --- | --- | --- |
+| `hidden_stems` | `hidden-stems` | `HiddenStemRule::DutyDoorHourStemWithCenterFallback` |
+| `strength` | `strength` | `StrengthRule::ClassicalStarsAndFiveElements` |
+| `growth_stages` | `growth-stages` | `GrowthRule::YangForwardYinReverseFireEarth` |
+| `punishments` | `punishments` | `PunishmentRule::SixInstrumentBranches` |
+| `tombs` | `tombs` | `TombRule::GrowthStageFireEarth` 或 `TombRule::TraditionalThreeWonders` |
+| `day_horse` | `day-horse` | `DayHorseRule::DayBranchThreeHarmony` |
+| `door_pressure` | `door-pressure` | `DoorPressureRule::DoorControlsPalace` |
+
+CLI 的 `all` 等同于 `ExtensionOptions::all()` 预设。只有入墓目前提供替代规则：使用 `--tomb-rule growth-stage-fire-earth` 或 `--tomb-rule traditional-three-wonders`，且须同时开启 `tombs` 或 `all`。CLI 的连字符值与 JSON 的下划线值不能混写。
+
+### 调用示例
 
 Rust 可通过 `Calculator::new(ExtensionOptions::all())` 一次设置，随后多次调用 `calculate(&ChartRequest)`；只开启某项时，在 `ExtensionOptions` 中给该项设置明确的规则枚举。单次计算使用 `calculate_with_options(&request, &options)`。原 `calculate(&request)` 仍全部关闭。
 
@@ -67,6 +100,69 @@ JSON、MCP 工具参数使用同一 `CalculationRequest`：
 ```
 
 JSON 中省略的扩展不计算；未知选项或规则必须报错，不能悄悄降级。`--tomb-rule` 要与 `--extensions tombs` 或 `all` 同用，不能设置了规则却没有实际开启计算。
+
+### 结果字段速查
+
+开启的注记位于 `chart.extensions`；未开启的 key 不出现在结果中，全部关闭时省略整个 `extensions` 字段。每一项均带有 `rule`，其值就是请求中选择的规则字符串。
+
+| 相对 `chart.extensions` 的字段路径 | 含义 |
+| --- | --- |
+| `hidden_stems.effective_hour_stem` | 用于飞布的实际时干；甲已经替换为旬首遁干 |
+| `hidden_stems.start_palace`、`used_center_fallback` | 实际起宫 `1..9`，以及是否因重干改从中五起 |
+| `hidden_stems.palaces[]` | 按宫号排列的九条暗干记录，含 `palace`、`stem` |
+| `strength.month_branch`、`month_element` | 节气月柱的月支及其五行，不是农历月份 |
+| `strength.palaces[]` | 每宫的 `stars[]`、`door`、`stems[]`；各对象的 `at_palace`、`at_month` 分别表示落宫、月令旺衰，中宫 `door` 为 `null` |
+| `growth_stages.stems[].branches[]` | 当前干对应的各宫支 `branch` 与长生阶段 `stage`；中宫为 `[]`，双支宫保留两条 |
+| `punishments.stems[]` | `hidden_jia` 为六仪所遁六甲，`punished_branch` 为刑支，`is_punished` 表示是否命中；三奇前两项为 `null`、命中为 `false` |
+| `tombs.stems[]` | `tomb_branch` 为所选规则的墓支，`is_in_tomb` 表示是否命中；规则不适用时两者均为 `null` |
+| `day_horse.pillar`、`horse` | 计算所用的日柱，以及包含 `branch`、`palace` 的日马；基础盘的时马保持独立 |
+| `door_pressure.doors[]` | 八门的宫号、门、门宫五行及 `is_pressed`（是否门迫）；没有中宫门记录 |
+
+上表同一行的简写字段共享前缀，例如 `used_center_fallback` 的完整路径为 `chart.extensions.hidden_stems.used_center_fallback`。
+
+逐干结果使用 `placement` 保留身份，不能仅按天干字符合并记录：
+
+| `placement` key | 值与含义 |
+| --- | --- |
+| `palace` | 实际落宫号，`1..9` |
+| `plate` | `heaven`：天盘；`earth`：地盘；`hidden`：已启用的暗干盘 |
+| `stem` | 当前记录对应的天干，沿用基础盘的天干编码 |
+| `source_palace` | 来源地盘宫号；构造出的暗干没有来源地盘宫，值为 `null` |
+| `is_center_hosted` | `true` 表示中宫干的附加寄宫记录，不替代原始中宫记录 |
+
+### 结果枚举值
+
+旺衰、长生状态使用下划线格式的英文枚举值，展示时可以按下表转换为中文。
+
+| 状态 value | 中文 | 使用范围 |
+| --- | --- | --- |
+| `wang` | 旺 | 九星、八门、天干旺衰 |
+| `xiang` | 相 | 九星、八门、天干旺衰 |
+| `xiu` | 休 | 九星、八门、天干旺衰 |
+| `qiu` | 囚 | 九星、八门、天干旺衰 |
+| `fei` | 废 | 仅九星旺衰 |
+| `si` | 死 | 八门、天干旺衰；也是十二长生阶段之一 |
+
+相同状态名称不表示相同五行关系；九星与门、干的对应关系见下文[旺衰规则](#旺衰必须区分对象与参照)。
+
+| 长生 `stage` | 中文 | 长生 `stage` | 中文 |
+| --- | --- | --- | --- |
+| `chang_sheng` | 长生 | `bing` | 病 |
+| `mu_yu` | 沐浴 | `si` | 死 |
+| `guan_dai` | 冠带 | `mu` | 墓 |
+| `lin_guan` | 临官 | `jue` | 绝 |
+| `di_wang` | 帝旺 | `tai` | 胎 |
+| `shuai` | 衰 | `yang` | 养 |
+
+区分以下三种结果，避免把缺失项强制转换为 `false`：
+
+| 表达 | 含义 | 例子 |
+| --- | --- | --- |
+| key 缺失 | 该注记未开启，没有计算结论 | 结果中没有 `extensions.tombs` |
+| `null` | 某个具体字段无适用值；需结合字段定义判断 | 古典三奇墓不适用于六仪，`tomb_branch`、`is_in_tomb` 均为 `null` |
+| `false` | 未命中；是否适用还需看对应规则字段 | 适用的墓支存在，但所在宫不含该支时，`is_in_tomb` 为 `false` |
+
+完整嵌套结构及天干、地支等基础编码见[结果 Schema](schema/chart.schema.json)。
 
 ## 暗干
 
