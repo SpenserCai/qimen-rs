@@ -1,6 +1,15 @@
 # qimen-rs
 
-[简体中文](README.md) · [Web charts](apps/web/README.md) · [Installation](docs/installation.md) · [Usage](docs/usage.md) · [Calculation rules](docs/algorithm-sources.md) · [Annotations](docs/extensions.md)
+[![crates.io](https://img.shields.io/crates/v/qimen-core?logo=rust&label=crates.io)](https://crates.io/crates/qimen-core)
+[![PyPI](https://img.shields.io/pypi/v/qimen-rs?logo=python&label=PyPI)](https://pypi.org/project/qimen-rs/)
+[![npm Node.js](https://img.shields.io/npm/v/%40spensercai%2Fqimen-rs?logo=npm&label=Node.js)](https://www.npmjs.com/package/@spensercai/qimen-rs)
+[![npm WASM](https://img.shields.io/npm/v/%40spensercai%2Fqimen-wasm?logo=webassembly&label=WASM)](https://www.npmjs.com/package/@spensercai/qimen-wasm)
+
+[![CI](https://img.shields.io/github/actions/workflow/status/SpenserCai/qimen-rs/ci.yml?branch=main&label=CI)](https://github.com/SpenserCai/qimen-rs/actions/workflows/ci.yml)
+[![docs.rs](https://img.shields.io/docsrs/qimen-core?logo=rust&label=docs.rs)](https://docs.rs/qimen-core/latest/qimen_core/)
+[![MIT License](https://img.shields.io/github/license/SpenserCai/qimen-rs)](LICENSE)
+
+[简体中文](README.md) · [Try online](https://qimen-rs.vercel.app) · [Installation](docs/installation.md) · [Usage](docs/usage.md) · [Calculation rules](docs/algorithm-sources.md) · [Annotation options](#optional-annotations)
 
 A Rust library for Four Pillars (BaZi) and Qimen Dunjia charts from Gregorian dates and civil times. The default method uses **hour-based Qimen, Chai Bu (拆补), rotating plates (转盘), fixed center-to-Kun hosting, and Tian Qin accompanying Tian Rui**.
 
@@ -42,7 +51,7 @@ Prebuilt native packages cover Linux x64 / arm64, macOS x64 / arm64 and Windows 
 
 ### Web charts
 
-`apps/web` is a ready-to-use visual application. Enter a Gregorian date, local time and UTC offset to reveal the Four Pillars and nine-palace chart after a brief compass animation. Select a palace to inspect its plates, stars, doors, deities and optional annotations. Calculations run in the browser through WASM.
+[Open the web app](https://qimen-rs.vercel.app), with no installation required. Enter a Gregorian date, local time and UTC offset to reveal the Four Pillars and nine-palace chart after a brief compass animation. Select a palace to inspect its plates, stars, doors, deities and optional annotations. Calculations run in the browser through WASM.
 
 Start locally with Node.js 22+:
 
@@ -69,6 +78,28 @@ fn main() -> Result<(), qimen_core::Error> {
 }
 ```
 
+### Python
+
+```python
+from qimen_rs import calculate
+
+chart = calculate({"year": 2026, "month": 9, "day": 18, "hour": 18})
+print(chart["calendar"]["four_pillars"])
+print(chart["palaces"])
+```
+
+### Node.js
+
+```javascript
+const { calculate } = require('@spensercai/qimen-rs');
+
+const chart = calculate({ year: 2026, month: 9, day: 18, hour: 18 });
+console.log(chart.calendar.four_pillars);
+console.log(chart.palaces);
+```
+
+ESM is also supported: `import { calculate } from '@spensercai/qimen-rs'`. For browsers, use the separate [WASM package](bindings/wasm/README.md) and initialize it before calculating.
+
 ### JSON
 
 Python, JavaScript, the MCP chart tool and Rust's `calculate_json` accept the same request fields:
@@ -90,7 +121,35 @@ Unknown fields, invalid dates and unsupported parameters produce explicit errors
 
 ### Optional annotations
 
-All annotations are disabled by default. Configure a reusable calculator or pass options to `calculate_with_options` for a single calculation:
+All annotations are disabled by default. JSON, Python, Node.js, WASM and MCP `paipan` requests share an `extensions` object: **the key selects the annotation; the value selects its rule**, rather than acting as a boolean switch.
+
+| `extensions` key | Accepted value | Meaning |
+| --- | --- | --- |
+| `hidden_stems` | `duty_door_hour_stem_with_center_fallback` | Fly the hour stem from the duty-door palace; start at center five if it repeats the native earth stem. Substitute the xun instrument for Jia first. |
+| `strength` | `classical_stars_and_five_elements` | Yanbo strength for stars; ordinary Five-Phase strength for doors and stems. Report palace and solar-month contexts separately. |
+| `growth_stages` | `yang_forward_yin_reverse_fire_earth` | Twelve growth stages: yang forward, yin backward, earth follows fire; each palace branch is reported separately. |
+| `punishments` | `six_instrument_branches` | Six-instrument punishment by the designated branches, preserving plate and hosted-stem identity. |
+| `tombs` | `growth_stage_fire_earth` | Ten-stem tombs from the growth stages; Yi's tomb is Xu. Used by the all-enabled preset. |
+| `tombs` | `traditional_three_wonders` | Classical three-wonders tombs: Yi–Wei, Bing–Xu, Ding–Chou. Not applicable to the six instruments. |
+| `day_horse` | `day_branch_three_harmony` | Travelling horse from the calculated day branch; leaves the base chart's hour horse unchanged. |
+| `door_pressure` | `door_controls_palace` | Door element controls palace element. The reverse relationship is excluded. |
+
+Include only the keys you need; omitting a key or setting it to `null` disables that annotation. Choose one `tombs` rule at a time. The calendar-only `bazi` tool does not accept annotations.
+
+```json
+{
+  "year": 2026,
+  "month": 9,
+  "day": 18,
+  "hour": 18,
+  "extensions": {
+    "day_horse": "day_branch_three_harmony",
+    "tombs": "traditional_three_wonders"
+  }
+}
+```
+
+In Rust, configure a reusable calculator or pass options to `calculate_with_options` for a single calculation:
 
 ```rust
 use qimen_core::{Calculator, ChartRequest, DayHorseRule, ExtensionOptions};
@@ -114,7 +173,7 @@ qimen paipan --year 2026 --month 9 --day 18 --hour 18 \
   --extensions hidden-stems,day-horse --json
 ```
 
-Results appear under `chart.extensions`, with named rules, plate identity and hosted-stem origins. They do not change the base chart or hour horse. The field is omitted when disabled. These are common auxiliary concepts with school-specific formulas; see [annotation rules](docs/extensions.md).
+Results appear under `chart.extensions`, with named rules, plate identity and hosted-stem origins. They do not change the base chart or hour horse. The field is omitted when disabled. CLI names use hyphens, such as `day-horse`; select the alternate tomb rule with `--extensions tombs --tomb-rule traditional-three-wonders`. See the [CLI / Rust mapping](docs/extensions.md#各接口参数对照), [result fields](docs/extensions.md#结果字段速查) and [enum values](docs/extensions.md#结果枚举值). That reference also explains the formulas and differences between conventions.
 
 ### MCP
 

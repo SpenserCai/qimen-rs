@@ -59,7 +59,7 @@ print(chart["extensions"]["day_horse"]["horse"])
 `tombs` 也可选择 `traditional_three_wonders`；该规则只判断三奇，不适用的六仪结果为
 `None`，与“未入墓”的 `False` 有区别。两种入墓约定不能混用。
 公共类型在 `qimen_rs.types` 中；JSON Schema 与软件包版本分别编号。
-完整规则与适用范围见 [扩展约定](../../docs/extensions.md)。
+全部 key、规则 value 及含义见[扩展参数表](../../docs/extensions.md#请求-key-与-value)；返回字段与枚举见[结果速查](../../docs/extensions.md#结果字段速查)，计算口径与适用范围见同页规则说明。
 
 ## 从源码安装
 

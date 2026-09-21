@@ -59,7 +59,7 @@ console.log(annotated.extensions.day_horse.horse);
 日马与时马分别返回。`tombs` 可改选 `traditional_three_wonders`，不适用的六仪结果为
 `null`。所有扩展参数和结果的 TypeScript 类型包含在包中；JSON Schema 与软件包使用不同的版本号。
 对象入口和 JSON 入口均由 Rust 严格校验未知字段、错误规则和参数类型。
-完整规则与适用范围见 [扩展约定](../../docs/extensions.md)。
+全部 key、规则 value 及含义见[扩展参数表](../../docs/extensions.md#请求-key-与-value)；返回字段与枚举见[结果速查](../../docs/extensions.md#结果字段速查)，计算口径与适用范围见同页规则说明。
 
 ## 从源码使用
 
