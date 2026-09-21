@@ -925,6 +925,10 @@ p {
   margin: -7px -17px -3px;
   aspect-ratio: 1;
 }
+.chart-face {
+  position: absolute;
+  inset: 0;
+}
 .compass-rings {
   position: absolute;
   inset: 0;
@@ -2537,6 +2541,337 @@ button.palace-cell:hover {
   .void-horse-strip > span {
     font-size: 9px;
     padding: 6px 8px;
+  }
+}
+/* Keep the existing three-column desktop composition within the viewport.
+   Short or zoomed windows retain the normal document flow for accessibility. */
+@media (min-width: 1051px) and (min-height: 700px) {
+  .qimen-app {
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+  }
+  .workspace-header {
+    min-height: clamp(50px, 7dvh, 60px);
+    flex-shrink: 0;
+  }
+  .brand-seal {
+    width: 34px;
+    height: 34px;
+    font-size: 21px;
+  }
+  .brand-wordmark {
+    font-size: 23px;
+  }
+  .workspace-main {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+  .workspace-intro {
+    padding: clamp(4px, calc(4dvh - 25px), 9px) 0;
+    font-size: 10px;
+    line-height: 1.4;
+  }
+  .workspace-grid {
+    min-height: 0;
+    align-items: stretch;
+    gap: 22px;
+  }
+  .workspace-footer {
+    margin-top: 6px;
+    padding: clamp(4px, calc(4dvh - 25px), 9px) 0;
+    font-size: 10px;
+    line-height: 1.4;
+  }
+  .input-panel {
+    padding: clamp(8px, calc(5dvh - 28px), 16px) 16px 6px;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #4a655b transparent;
+  }
+  .panel-heading {
+    padding-bottom: clamp(4px, calc(5dvh - 32px), 8px);
+  }
+  .heading-text {
+    margin-top: 3px;
+    font-size: 20px;
+    line-height: 1.2;
+  }
+  .input-form {
+    margin-top: clamp(4px, calc(5dvh - 32px), 8px);
+  }
+  .field-label {
+    margin: clamp(3px, calc(4dvh - 26px), 7px) 0 2px;
+    line-height: 1.3;
+  }
+  .field-shell {
+    min-height: clamp(26px, calc(5dvh - 10px), 32px);
+  }
+  .field-shell input {
+    padding: 2px 0;
+    line-height: 1.4;
+    font-size: 13px;
+  }
+  .field-hint {
+    margin-top: 3px;
+    line-height: 1.4;
+  }
+  .now-button {
+    min-height: clamp(26px, calc(5dvh - 10px), 32px);
+  }
+  .method-chip {
+    margin-top: clamp(4px, calc(5dvh - 32px), 8px);
+    padding: 3px 8px;
+    font-size: 11px;
+    line-height: 1.4;
+  }
+  .boundary-field {
+    margin-top: clamp(4px, calc(5dvh - 32px), 8px);
+  }
+  .boundary-field legend {
+    margin-bottom: 3px;
+  }
+  .segmented-control label {
+    min-height: clamp(25px, calc(5dvh - 11px), 31px);
+  }
+  .cast-button {
+    margin-top: clamp(6px, calc(5dvh - 30px), 12px);
+    min-height: clamp(36px, 5dvh, 44px);
+    font-size: 19px;
+  }
+  .extension-fields {
+    margin-top: clamp(6px, calc(7dvh - 44px), 14px);
+    padding-top: clamp(4px, calc(5dvh - 32px), 8px);
+  }
+  .subsection-title {
+    margin-bottom: 2px;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+  .extension-batch {
+    margin-bottom: 2px;
+  }
+  .text-button {
+    min-height: 24px;
+    padding: 2px 0;
+    line-height: 1.4;
+  }
+  .toggle-label {
+    min-height: clamp(24px, calc(5dvh - 12px), 30px);
+  }
+  .tomb-label {
+    margin-top: 6px;
+  }
+  .select-shell select {
+    padding-top: 3px;
+    padding-bottom: 3px;
+    min-height: clamp(26px, calc(5dvh - 10px), 32px);
+    line-height: 1.4;
+  }
+  .select-shell svg {
+    top: 8px;
+  }
+  .input-footnote {
+    margin-top: clamp(5px, calc(5dvh - 31px), 10px);
+    padding-top: clamp(4px, calc(5dvh - 32px), 8px);
+    line-height: 1.5;
+  }
+  .chart-workspace {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .chart-workspace > :not(.chart-stage) {
+    flex-shrink: 0;
+  }
+  .chart-date {
+    margin-bottom: 3px;
+  }
+  .pillars {
+    padding: clamp(3px, calc(4dvh - 26px), 7px) 0;
+  }
+  .pillar strong {
+    font-size: clamp(26px, 3.5dvh, 34px);
+    line-height: 1.1;
+  }
+  .chart-facts {
+    margin-top: 5px;
+    padding: 3px;
+    line-height: 1.4;
+  }
+  .chart-context {
+    padding-top: 3px;
+    line-height: 1.4;
+  }
+  .result-state {
+    min-height: 16px;
+    padding-top: 0;
+  }
+  .chart-stage {
+    flex: 1;
+    min-height: 300px;
+    width: 100%;
+    margin: 0;
+    aspect-ratio: auto;
+    container-type: size;
+    display: grid;
+    place-items: center;
+  }
+  .chart-face {
+    position: relative;
+    inset: auto;
+    width: min(100cqw, 100cqh);
+    height: min(100cqw, 100cqh);
+    container-type: inline-size;
+  }
+  .palace-grid {
+    inset: 10.5%;
+  }
+  .palace-cell {
+    min-height: 0;
+    padding: clamp(5px, 1.4cqw, 11px);
+  }
+  .palace-top {
+    font-size: clamp(8px, 2cqw, 11px);
+    min-height: 15px;
+  }
+  .palace-deity {
+    font-size: clamp(11px, 2.9cqw, 16px);
+    line-height: 1.4;
+  }
+  .palace-stars {
+    font-size: clamp(14px, 4cqw, 26px);
+  }
+  .palace-stars:has(+ .palace-door) {
+    line-height: 1.25;
+  }
+  .palace-door {
+    font-size: clamp(17px, 4.7cqw, 29px);
+    line-height: 1.3;
+  }
+  .palace-stems {
+    font-size: clamp(11px, 3.2cqw, 18px);
+  }
+  .palace-stems > span {
+    gap: 2px;
+  }
+  .palace-stems small {
+    font-size: clamp(7px, 1.7cqw, 10px);
+  }
+  .center-content {
+    gap: 2px;
+  }
+  .center-emblem {
+    font-size: clamp(20px, 5cqw, 27px);
+  }
+  .center-content strong {
+    font-size: clamp(19px, 5cqw, 24px);
+    line-height: 1.2;
+  }
+  .center-content > span:last-child {
+    font-size: clamp(8px, 2cqw, 10px);
+    line-height: 1.3;
+  }
+  .hosted-stem {
+    font-size: 0.7em;
+  }
+  .hosted-stem sup {
+    font-size: 0.6em;
+  }
+  .chart-axis {
+    font-size: 11px;
+  }
+  .time-navigation {
+    margin-top: 3px;
+  }
+  .time-navigation .secondary-button,
+  .chart-actions .secondary-button {
+    min-height: 32px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+  }
+  .time-navigation small {
+    margin-top: 1px;
+  }
+  .void-horse-strip {
+    margin-top: 5px;
+  }
+  .void-horse-strip > span {
+    padding: 3px 8px;
+  }
+  .chart-actions {
+    margin-top: 6px;
+  }
+  .action-notice {
+    margin-top: 4px;
+    min-height: 18px;
+    line-height: 1.4;
+  }
+  .detail-panel {
+    padding: 14px 18px 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .detail-panel > :not(.detail-scroll) {
+    flex-shrink: 0;
+  }
+  .detail-header h2 {
+    margin-top: 3px;
+    font-size: 23px;
+    line-height: 1.3;
+  }
+  .palace-coordinate {
+    margin-top: 6px;
+  }
+  .detail-door {
+    padding: 12px 0;
+  }
+  .detail-door > strong {
+    font-size: 34px;
+    line-height: 1.3;
+  }
+  .detail-tabs button {
+    min-height: 33px;
+    padding: 5px 0;
+  }
+  .detail-scroll {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+  }
+  .detail-row {
+    padding: 8px 0;
+  }
+  .detail-row dd {
+    font-size: 15px;
+  }
+  .conventions-block {
+    margin-top: 13px;
+  }
+  .conventions-block h3 {
+    margin-bottom: 7px;
+  }
+  .term-detail {
+    margin-top: clamp(5px, calc(5dvh - 31px), 10px);
+  }
+  .detail-footer {
+    padding: 9px 0;
+    margin-top: 6px;
+  }
+  .detail-empty {
+    justify-content: center;
+  }
+  .manual-copy {
+    max-height: 160px;
+    overflow-y: auto;
+  }
+  .qimen-app:has(.manual-copy) .chart-workspace {
+    overflow-y: auto;
   }
 }
 @media (prefers-reduced-motion: reduce) {

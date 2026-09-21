@@ -92,7 +92,7 @@ npx playwright install --with-deps chromium webkit
 npm run test:e2e
 ```
 
-ESLint 使用 `--max-warnings=0`，TypeScript 开启严格检查。Vitest 验证输入、分享及状态边界；Playwright 对正式构建验证真实 WASM、桌面 / 移动端交互、减弱动效与失败恢复。测试放独立测试文件；不能用 mock 结果代替真实排盘链路。视觉修改至少检查桌面、窄屏与键盘路径。更新 npm 依赖时提交 `apps/web/package-lock.json`，生产资源由构建脚本从已锁定的 WASM 包准备，不提交生成的二进制。
+ESLint 使用 `--max-warnings=0`，TypeScript 开启严格检查。Vitest 验证输入、分享及状态边界；Playwright 对正式构建验证真实 WASM、桌面 / 移动端交互、减弱动效与失败恢复。测试放独立测试文件；不能用 mock 结果代替真实排盘链路。视觉修改至少检查桌面、窄屏与键盘路径。桌面高度适配同时验证完整九宫、输入及操作没有裁切，详情可独立滚动；较矮窗口和缩放后的窄屏保留可访问的自然排布，不能用隐藏溢出掩盖布局问题。更新 npm 依赖时提交 `apps/web/package-lock.json`，生产资源由构建脚本从已锁定的 WASM 包准备，不提交生成的二进制。
 
 CI 必须通过 Linux / Windows / macOS 与所有声明的二进制目标。不能把“已写 CI”报告成“CI 已通过”；无法验证时明确列出未运行项与原因。提交前检查 diff，保留其他协作者的修改；并行开发按目录分工，在共享 API 改动前同步接口。
 

@@ -251,45 +251,47 @@ export function ChartBoard({
       className={`chart-stage ${casting ? "casting" : ""}`}
       aria-busy={casting}
     >
-      <CompassRings
-        casting={casting}
-        rotation={rotation}
-        reducedMotion={reducedMotion}
-      />
-      <span className="chart-axis axis-south" aria-hidden="true">
-        南
-      </span>
-      <span className="chart-axis axis-north" aria-hidden="true">
-        北
-      </span>
-      <span className="chart-axis axis-east" aria-hidden="true">
-        东
-      </span>
-      <span className="chart-axis axis-west" aria-hidden="true">
-        西
-      </span>
-      <div
-        className="palace-grid"
-        role="group"
-        aria-label="九宫排盘，南在上、东在左，可使用方向键移动焦点"
-      >
-        {chart
-          ? ORDER.map((number) => (
-              <PalaceCell
-                key={number}
-                palace={chart.palaces[number - 1]}
-                chart={chart}
-                selected={selected === number}
-                onSelect={() => onSelect(number)}
-              />
-            ))
-          : ORDER.map((number) => (
-              <div className="palace-cell skeleton-palace" key={number}>
-                <span>{PALACE_LABELS[number]}</span>
-                <span className="skeleton-line" />
-                <span className="skeleton-line short" />
-              </div>
-            ))}
+      <div className="chart-face">
+        <CompassRings
+          casting={casting}
+          rotation={rotation}
+          reducedMotion={reducedMotion}
+        />
+        <span className="chart-axis axis-south" aria-hidden="true">
+          南
+        </span>
+        <span className="chart-axis axis-north" aria-hidden="true">
+          北
+        </span>
+        <span className="chart-axis axis-east" aria-hidden="true">
+          东
+        </span>
+        <span className="chart-axis axis-west" aria-hidden="true">
+          西
+        </span>
+        <div
+          className="palace-grid"
+          role="group"
+          aria-label="九宫排盘，南在上、东在左，可使用方向键移动焦点"
+        >
+          {chart
+            ? ORDER.map((number) => (
+                <PalaceCell
+                  key={number}
+                  palace={chart.palaces[number - 1]}
+                  chart={chart}
+                  selected={selected === number}
+                  onSelect={() => onSelect(number)}
+                />
+              ))
+            : ORDER.map((number) => (
+                <div className="palace-cell skeleton-palace" key={number}>
+                  <span>{PALACE_LABELS[number]}</span>
+                  <span className="skeleton-line" />
+                  <span className="skeleton-line short" />
+                </div>
+              ))}
+        </div>
       </div>
       {casting ? (
         <div className="casting-indicator" role="status">

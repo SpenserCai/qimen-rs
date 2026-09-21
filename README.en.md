@@ -52,6 +52,8 @@ npm ci
 npm run dev
 ```
 
+The desktop columns adapt to the available window height, with longer palace details scrolling within their panel. Narrow screens use a stacked layout.
+
 Open [localhost:3000](http://localhost:3000). See the [Web guide](apps/web/README.md) for controls and data handling.
 
 ### Rust
