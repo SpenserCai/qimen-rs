@@ -1,0 +1,128 @@
+name: Web
+
+on:
+  pull_request:
+    paths:
+      - 'apps/web/**'
+      - '.github/workflows/web.yml'
+      - 'Cargo.toml'
+      - 'scripts/versions.py'
+      - 'scripts/tests/test_versions.py'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/**'
+      - '.github/workflows/web.yml'
+      - 'Cargo.toml'
+      - 'scripts/versions.py'
+      - 'scripts/tests/test_versions.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CI: 'true'
+  NEXT_TELEMETRY_DISABLED: '1'
+
+jobs:
+  checks:
+    name: Web quality and browser tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Validate the project version
+        working-directory: .
+        run: python scripts/release.py validate
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Install browser engines
+        run: npx playwright install --with-deps chromium webkit
+      - run: npm run test:e2e
+      - name: Retain browser failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: web-browser-diagnostics
+          path: |
+            apps/web/playwright-report/
+            apps/web/test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  deploy:
+    name: Deploy Web to Vercel
+    needs: checks
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    concurrency:
+      group: web-production
+      cancel-in-progress: false
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID || secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID || secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Check deployment configuration
+        id: configuration
+        shell: bash
+        run: |
+          if [[ -n "$VERCEL_TOKEN" && -n "$VERCEL_ORG_ID" && -n "$VERCEL_PROJECT_ID" ]]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo 'Web checks passed. Deployment skipped: configure VERCEL_TOKEN, VERCEL_ORG_ID and VERCEL_PROJECT_ID in repository Actions settings.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/checkout@v7
+        if: steps.configuration.outputs.ready == 'true'
+      - uses: actions/setup-node@v7
+        if: steps.configuration.outputs.ready == 'true'
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Install pinned Vercel CLI
+        if: steps.configuration.outputs.ready == 'true'
+        run: npm install --global vercel@59.23.2
+      - name: Pull production settings from repository root
+        if: steps.configuration.outputs.ready == 'true'
+        run: vercel pull --yes --environment=production --token "$VERCEL_TOKEN"
+      - name: Validate monorepo project directory
+        if: steps.configuration.outputs.ready == 'true'
+        run: |
+          node --input-type=module <<'JS'
+          import { readFileSync } from 'node:fs';
+          const project = JSON.parse(readFileSync('.vercel/project.json', 'utf8'));
+          if (project.settings?.rootDirectory !== 'apps/web') {
+            throw new Error('Set the Vercel project Root Directory to apps/web. CLI commands run from the repository root.');
+          }
+          JS
+      - name: Build production artifact
+        if: steps.configuration.outputs.ready == 'true'
+        run: vercel build --prod --yes --token "$VERCEL_TOKEN"
+      - name: Deploy the built artifact
+        if: steps.configuration.outputs.ready == 'true'
+        shell: bash
+        run: |
+          deployment_url=$(vercel deploy --prebuilt --prod --yes --token "$VERCEL_TOKEN")
+          printf 'Production deployment: %s\nCommit: %s\n' "$deployment_url" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"

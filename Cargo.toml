@@ -1,5 +1,6 @@
 [workspace]
 members = ["crates/*", "apps/*", "bindings/python", "bindings/node", "bindings/wasm"]
+exclude = ["apps/web"]
 default-members = ["crates/qimen-calendar", "crates/qimen-core", "apps/qimen-cli", "apps/qimen-mcp"]
 resolver = "3"
 

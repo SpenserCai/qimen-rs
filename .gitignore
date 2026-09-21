@@ -33,3 +33,13 @@ calendar-check.json
 dist/
 bindings/wasm/pkg/
 quality-diagnostics/
+
+# Web build output and local deployment configuration
+.next/
+.vercel/
+*.tsbuildinfo
+playwright-report/
+test-results/
+/apps/web/public/wasm/
+.env*
+!.env.example

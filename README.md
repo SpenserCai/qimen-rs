@@ -1,15 +1,16 @@
 # qimen-rs
 
-[English](README.en.md) · [安装](docs/installation.md) · [使用指南](docs/usage.md) · [算法约定](docs/algorithm-sources.md) · [扩展规则](docs/extensions.md)
+[English](README.en.md) · [Web 排盘](apps/web/README.md) · [安装](docs/installation.md) · [使用指南](docs/usage.md) · [算法约定](docs/algorithm-sources.md) · [扩展规则](docs/extensions.md)
 
 以 Rust 实现的八字与奇门遁甲排盘库。输入公历年月日时分秒，得到具有明确历法和流派约定的结构化结果。默认采用 **时家奇门、拆补法、转盘、中五寄坤、天禽随芮**。
 
-计算可完全离线运行。Rust、Python、Node.js、WebAssembly、CLI 和 MCP 共享同一套排盘规则与结果格式。
+计算可完全离线运行。Rust、Python、Node.js、WebAssembly、Web、CLI 和 MCP 共享同一套排盘规则与结果格式。
 
 - **历法与八字**：农历、四柱、节气交接时刻、可配置的换日规则。
 - **完整基础盘**：阴阳遁、三元局数、旬首、值符值使、九宫盘层、旬空与时马。
 - **可选注记**：暗干、旺衰、十二长生、六仪击刑、入墓、日马与门迫，按需开启。
 - **多种接入方式**：Rust 类型、JSON、Python 字典、JavaScript 对象、终端与 MCP 工具。
+- **可视化排盘**：山海天盘界面、九宫详情、按时辰切换、分享与导出，支持桌面和手机。
 
 本文对应 **0.2.0 接口**。Streamable HTTP 和扩展日期范围要求 **0.2.0+**；使用前请确认安装版本，也可从源码构建。Rust crate 和各语言包使用统一项目版本，JSON Schema 版本单独表示数据结构的兼容性。
 
@@ -38,6 +39,20 @@ qimen bazi --year 2026 --month 9 --day 18 --hour 15
 | 浏览器 WASM | `npm install @spensercai/qimen-wasm` | [WebAssembly 用法](bindings/wasm/README.md) |
 
 预构建产物覆盖 Linux x64 / arm64、macOS x64 / arm64、Windows x64；系统要求和源码安装见[安装指南](docs/installation.md)。
+
+### Web 排盘
+
+`apps/web` 提供开箱即用的可视化应用。输入公历时间与 UTC 偏移，短暂的罗盘动效结束后显示八字和九宫盘；选择宫位可展开天盘、地盘、九星、八门、八神和扩展注记。计算由浏览器内的 WASM 完成。
+
+使用 Node.js 22+ 在本地启动：
+
+```bash
+cd apps/web
+npm ci
+npm run dev
+```
+
+打开 [localhost:3000](http://localhost:3000)。完整操作说明见 [Web 使用指南](apps/web/README.md)。
 
 ### Rust
 
@@ -147,6 +162,7 @@ qimen paipan --year 2026 --month 9 --day 18 --hour 18 \
 ```mermaid
 flowchart TB
     subgraph Apps["应用"]
+        Web["Web"]
         CLI["CLI"]
         MCP["MCP"]
     end
@@ -155,6 +171,7 @@ flowchart TB
         Node["Node.js"]
         WASM["WASM"]
     end
+    Web --> WASM
     CLI --> Core
     MCP --> Core
     Python --> Core
