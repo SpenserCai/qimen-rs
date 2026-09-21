@@ -116,13 +116,61 @@ jobs:
           if (project.settings?.rootDirectory !== 'apps/web') {
             throw new Error('Set the Vercel project Root Directory to apps/web. CLI commands run from the repository root.');
           }
+          const { rootDirectory, framework, outputDirectory } = project.settings;
+          console.log('Remote project settings:', { rootDirectory, framework, outputDirectory });
+          console.log('Build settings are pinned in apps/web/vercel.json.');
           JS
       - name: Build production artifact
         if: steps.configuration.outputs.ready == 'true'
         run: vercel build --prod --yes --token "$VERCEL_TOKEN"
+      - name: Validate deployable Next.js output
+        if: steps.configuration.outputs.ready == 'true'
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import { existsSync, readFileSync, readdirSync } from 'node:fs';
+          const output = '.vercel/output';
+          const config = JSON.parse(readFileSync(`${output}/config.json`, 'utf8'));
+          assert.equal(config.version, 3, 'Expected Vercel Build Output API v3');
+          assert.equal(config.framework?.slug, 'nextjs', 'Deployment must use the Next.js adapter');
+          for (const page of ['index', 'guide']) {
+            assert(
+              existsSync(`${output}/static/${page}.html`) ||
+              existsSync(`${output}/functions/${page}.prerender-fallback.html`) ||
+              existsSync(`${output}/functions/${page}.func/.vc-config.json`),
+              `Missing deployable page: ${page}`,
+            );
+          }
+          assert(readdirSync(`${output}/static/_next/static`).length > 0, 'Missing browser assets');
+          const wasm = JSON.parse(readFileSync('apps/web/node_modules/@spensercai/qimen-wasm/package.json', 'utf8'));
+          for (const file of ['qimen_wasm.js', 'qimen_wasm_bg.wasm']) {
+            assert(existsSync(`${output}/static/wasm/qimen-${wasm.version}/${file}`), `Missing WASM asset: ${file}`);
+          }
+          console.log('Next.js pages, browser assets and published WASM are ready for deployment.');
+          JS
       - name: Deploy the built artifact
         if: steps.configuration.outputs.ready == 'true'
         shell: bash
         run: |
           deployment_url=$(vercel deploy --prebuilt --prod --yes --token "$VERCEL_TOKEN")
           printf 'Production deployment: %s\nCommit: %s\n' "$deployment_url" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+      - name: Install production smoke-test browser
+        if: steps.configuration.outputs.ready == 'true'
+        working-directory: apps/web
+        run: npx playwright install --with-deps chromium
+      - name: Verify production homepage and real WASM chart
+        if: steps.configuration.outputs.ready == 'true'
+        working-directory: apps/web
+        env:
+          PLAYWRIGHT_BASE_URL: https://qimen-rs.vercel.app
+        run: npx playwright test --project=chromium --grep '真实 WASM 的参考盘'
+      - name: Retain production browser failure diagnostics
+        if: failure() && steps.configuration.outputs.ready == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: web-production-browser-diagnostics
+          path: |
+            apps/web/playwright-report/
+            apps/web/test-results/
+          retention-days: 7
+          if-no-files-found: ignore

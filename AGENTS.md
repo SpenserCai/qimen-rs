@@ -125,9 +125,9 @@ Web 使用独立 `.github/workflows/web.yml`：相关 PR 只运行质量与浏�
 | `VERCEL_ORG_ID` | Repository variable，或同名 secret | Vercel team / account ID，或本地 `.vercel/project.json` 的 `orgId` |
 | `VERCEL_PROJECT_ID` | Repository variable，或同名 secret | Vercel 项目 ID，或 `.vercel/project.json` 的 `projectId` |
 
-Vercel 项目设置为 **Next.js、Node.js 22.x、Root Directory `apps/web`**，安装命令为 `npm ci`、构建命令为 `npm run build`，其余输出设置使用框架默认。该 Root Directory 是远端 Project Setting，不写入 `vercel.json`。独立工作流从仓库根执行固定版本 CLI 的 `vercel pull`、`vercel build --prod` 与 `vercel deploy --prebuilt --prod`，拉取设置后先核对目录；不能在 `apps/web` 下重复应用同一路径。若同时使用 Vercel Git 集成，应关闭它对该项目的自动部署，避免绕过 Actions 门禁或重复发布；项目配置应由用户授权的部署操作管理。
+Vercel 项目设置为 **Next.js、Node.js 22.x、Root Directory `apps/web`**，框架、`npm ci` 安装、`npm run build` 构建及默认输出目录由 `apps/web/vercel.json` 固定，覆盖远端设置，不能按普通静态目录发布 `public/`。该 Root Directory 是远端 Project Setting，不写入 `vercel.json`。独立工作流从仓库根执行固定版本 CLI 的 `vercel pull`、`vercel build --prod` 与 `vercel deploy --prebuilt --prod`，拉取设置后先核对目录；不能在 `apps/web` 下重复应用同一路径。若同时使用 Vercel Git 集成，应关闭它对该项目的自动部署，避免绕过 Actions 门禁或重复发布；项目配置应由用户授权的部署操作管理。
 
-应用运行不需要业务 API key。ChatGPT 连接 Vercel 仅授予当前连接器相应访问，不会自动在 GitHub 配置部署 token；首次部署须确认实际账号 / 项目可访问。不要将 token、拉取的 `.vercel` 或 `.env` 文件签入仓库。部署后检查正式 URL、WASM 加载和实际排盘，必要时用 Vercel promote / rollback 恢复已验证产物，不在故障期间修改库版本。
+应用运行不需要业务 API key。ChatGPT 连接 Vercel 仅授予当前连接器相应访问，不会自动在 GitHub 配置部署 token；首次部署须确认实际账号 / 项目可访问。不要将 token、拉取的 `.vercel` 或 `.env` 文件签入仓库。部署前验证 Build Output 的 Next.js 框架、首页、指南、浏览器资源及 WASM 文件；部署后工作流必须对正式域名 `https://qimen-rs.vercel.app` 执行真实 WASM 参考盘浏览器检查，域名变更时同步该检查地址。上线检查失败时保留浏览器诊断，不能只报告上传成功。必要时用 Vercel promote / rollback 恢复已验证产物，不在故障期间修改库版本。
 
 Web 使用 Prettier 统一源码与配置格式，运行 `npm run format` 修正。升级 TypeScript / ESLint 时同时核对 Next.js、typescript-eslint 与规则插件的兼容范围，不通过关闭 lint 或忽略 peer dependencies 消除工具链错误。
 
