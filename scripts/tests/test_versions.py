@@ -14,7 +14,8 @@ import versions
 
 def repository(root: Path) -> None:
     files = {
-        "Cargo.toml": '[workspace]\nmembers = ["crates/*", "bindings/*"]\n'
+        "Cargo.toml": '[workspace]\nmembers = ["crates/*", "apps/*", "bindings/*"]\n'
+                      'exclude = ["apps/web"]\n'
                       '[workspace.package]\nversion = "0.1.0"\n'
                       '[workspace.dependencies]\nqimen-core = { path = "crates/core", version = "0.1.0" }\n',
         "Cargo.lock": 'version = 4\n\n[[package]]\nname = "external"\nversion = "0.1.0"\n'
@@ -24,6 +25,11 @@ def repository(root: Path) -> None:
         "bindings/node/package-lock.json": json.dumps({
             "version": "0.1.0", "packages": {"": {"version": "0.1.0"},
             "node_modules/external": {"version": "0.1.0", "integrity": "sha512-example"}}}),
+        "apps/web/package.json": json.dumps({"name": "qimen-web", "version": "0.1.0", "private": True,
+                                            "dependencies": {"@spensercai/qimen-wasm": "0.1.0"}}),
+        "apps/web/package-lock.json": json.dumps({
+            "version": "0.1.0", "packages": {"": {"version": "0.1.0"},
+            "node_modules/@spensercai/qimen-wasm": {"version": "0.1.0", "integrity": "sha512-wasm"}}}),
     }
     for directory, name in (("crates/core", "qimen-core"), ("bindings/node", "qimen-node"),
                             ("bindings/python", "qimen-python"), ("bindings/wasm", "qimen-wasm")):
@@ -55,6 +61,14 @@ class VersionsTests(unittest.TestCase):
         self.assertEqual(rust[0]["version"], "0.1.0")
         node = json.loads((self.root / "bindings/node/package-lock.json").read_text())
         self.assertEqual(node["packages"]["node_modules/external"], node_before)
+        web = json.loads((self.root / "apps/web/package.json").read_text())
+        self.assertEqual(web["version"], "0.2.0")
+        self.assertEqual(web["dependencies"]["@spensercai/qimen-wasm"], "0.1.0")
+        web_lock = json.loads((self.root / "apps/web/package-lock.json").read_text())
+        self.assertEqual(web_lock["version"], "0.2.0")
+        self.assertEqual(web_lock["packages"][""]["version"], "0.2.0")
+        self.assertEqual(web_lock["packages"]["node_modules/@spensercai/qimen-wasm"],
+                         {"version": "0.1.0", "integrity": "sha512-wasm"})
 
     def test_invalid_or_backward_versions_do_not_modify_files(self):
         before = (self.root / "Cargo.toml").read_bytes()
@@ -66,7 +80,9 @@ class VersionsTests(unittest.TestCase):
     def test_failed_validation_restores_every_changed_file(self):
         python = self.root / "bindings/python/pyproject.toml"
         python.write_text('[project]\nname = "qimen-rs"\nversion = "0.1.0"\n')
-        paths = versions.manifest_paths(self.root) + [self.root / "Cargo.lock", self.root / "bindings/node/package.json", self.root / "bindings/node/package-lock.json"]
+        paths = versions.manifest_paths(self.root) + [self.root / "Cargo.lock"]
+        paths += [self.root / directory / filename for directory in versions.NPM_PACKAGES
+                  for filename in ("package.json", "package-lock.json")]
         before = {path: path.read_bytes() for path in paths}
         with self.assertRaisesRegex(ValueError, "Python"):
             versions.synchronize("0.2.0", self.root)
@@ -82,6 +98,8 @@ class VersionsTests(unittest.TestCase):
         for filename, old, new in (
             ("Cargo.lock", 'name = "qimen-core"\nversion = "0.1.0"', 'name = "qimen-core"\nversion = "0.2.0"'),
             ("bindings/node/package-lock.json", '"version": "0.1.0"', '"version": "0.2.0"'),
+            ("apps/web/package.json", '"version": "0.1.0"', '"version": "0.2.0"'),
+            ("apps/web/package-lock.json", '"version": "0.1.0"', '"version": "0.2.0"'),
             ("bindings/node/Cargo.toml", 'version = "0.1.0"', 'version = "0.2.0"'),
         ):
             with self.subTest(file=filename):
@@ -91,6 +109,16 @@ class VersionsTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     versions.validate(self.root)
                 path.write_text(original)
+
+    def test_web_is_excluded_from_rust_members_and_cannot_be_published_to_npm(self):
+        self.assertNotIn(self.root / "apps/web/Cargo.toml", versions.manifest_paths(self.root))
+        versions.validate(self.root)
+        path = self.root / "apps/web/package.json"
+        package = json.loads(path.read_text())
+        package["private"] = False
+        path.write_text(json.dumps(package))
+        with self.assertRaisesRegex(ValueError, "private"):
+            versions.validate(self.root)
 
     def test_reapplying_version_is_idempotent(self):
         versions.synchronize("0.2.0", self.root)

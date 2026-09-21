@@ -8,6 +8,7 @@ import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
 STABLE = re.compile(r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)")
+NPM_PACKAGES = ("bindings/node", "apps/web")
 
 
 def version_key(value: str) -> tuple[int, ...]:
@@ -19,8 +20,9 @@ def version_key(value: str) -> tuple[int, ...]:
 def manifest_paths(root: Path) -> list[Path]:
     paths = [root / "Cargo.toml"]
     workspace = tomllib.loads(paths[0].read_text(encoding="utf-8"))["workspace"]
+    excluded = {path for pattern in workspace.get("exclude", []) for path in root.glob(pattern)}
     for member in workspace["members"]:
-        paths.extend(path / "Cargo.toml" for path in sorted(root.glob(member)))
+        paths.extend(path / "Cargo.toml" for path in sorted(root.glob(member)) if path not in excluded)
     return list(dict.fromkeys(paths))
 
 
@@ -54,10 +56,13 @@ def validate(root: Path = ROOT, *, tracked: bool = True) -> None:
         for name, dependency in local_dependencies(metadata):
             if dependency.get("version") != expected:
                 raise ValueError(f"Local dependency {name} in {path.relative_to(root)} must use {expected}")
-    node = json.loads((root / "bindings/node/package.json").read_text(encoding="utf-8"))
-    lock = json.loads((root / "bindings/node/package-lock.json").read_text(encoding="utf-8"))
-    if any(item.get("version") != expected for item in (node, lock, lock["packages"][""])):
-        raise ValueError("Node package.json and package-lock.json must mirror the workspace version")
+    for directory in NPM_PACKAGES:
+        package = json.loads((root / directory / "package.json").read_text(encoding="utf-8"))
+        lock = json.loads((root / directory / "package-lock.json").read_text(encoding="utf-8"))
+        if any(item.get("version") != expected for item in (package, lock, lock["packages"][""])):
+            raise ValueError(f"{directory} package.json and package-lock.json must mirror the workspace version")
+        if directory == "apps/web" and package.get("private") is not True:
+            raise ValueError("apps/web must remain a private application package")
     python = tomllib.loads((root / "bindings/python/pyproject.toml").read_text(encoding="utf-8"))["project"]
     if "version" in python or "version" not in python.get("dynamic", []):
         raise ValueError("Python must derive its dynamic version from the Rust workspace")
@@ -117,15 +122,16 @@ def synchronize(new: str, root: Path = ROOT) -> None:
     for name, old in old_versions:
         lock_source = lock_source.replace(f'"{name} {old}"', f'"{name} {new}"')
     changes[lock_path] = lock_source
-    node_path = root / "bindings/node/package.json"
-    node = json.loads(node_path.read_text(encoding="utf-8"))
-    node["version"] = new
-    changes[node_path] = json.dumps(node, ensure_ascii=False, indent=2) + "\n"
-    npm_lock_path = root / "bindings/node/package-lock.json"
-    npm_lock = json.loads(npm_lock_path.read_text(encoding="utf-8"))
-    npm_lock["version"] = new
-    npm_lock["packages"][""]["version"] = new
-    changes[npm_lock_path] = json.dumps(npm_lock, ensure_ascii=False, indent=2) + "\n"
+    for directory in NPM_PACKAGES:
+        package_path = root / directory / "package.json"
+        package = json.loads(package_path.read_text(encoding="utf-8"))
+        package["version"] = new
+        changes[package_path] = json.dumps(package, ensure_ascii=False, indent=2) + "\n"
+        npm_lock_path = root / directory / "package-lock.json"
+        npm_lock = json.loads(npm_lock_path.read_text(encoding="utf-8"))
+        npm_lock["version"] = new
+        npm_lock["packages"][""]["version"] = new
+        changes[npm_lock_path] = json.dumps(npm_lock, ensure_ascii=False, indent=2) + "\n"
     original = {path: path.read_bytes() for path in changes}
     try:
         for path, content in changes.items():

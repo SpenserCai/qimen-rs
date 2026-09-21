@@ -1,15 +1,16 @@
 # qimen-rs
 
-[简体中文](README.md) · [Installation](docs/installation.md) · [Usage](docs/usage.md) · [Calculation rules](docs/algorithm-sources.md) · [Annotations](docs/extensions.md)
+[简体中文](README.md) · [Web charts](apps/web/README.md) · [Installation](docs/installation.md) · [Usage](docs/usage.md) · [Calculation rules](docs/algorithm-sources.md) · [Annotations](docs/extensions.md)
 
 A Rust library for Four Pillars (BaZi) and Qimen Dunjia charts from Gregorian dates and civil times. The default method uses **hour-based Qimen, Chai Bu (拆补), rotating plates (转盘), fixed center-to-Kun hosting, and Tian Qin accompanying Tian Rui**.
 
-Calculations work offline. Rust, Python, Node.js, WebAssembly, CLI and MCP share the same chart engine and result format.
+Calculations work offline. Rust, Python, Node.js, WebAssembly, Web, CLI and MCP share the same chart engine and result format.
 
 - **Calendar and BaZi:** lunar dates, Four Pillars, solar-term instants and configurable day boundaries.
 - **Complete base charts:** Dun, Yuan, Ju, xun head, duty star and door, nine palaces, voids and the hour horse.
 - **Optional annotations:** hidden stems, strength, twelve growth stages, six-instrument punishment, tombs, the day horse and door pressure.
 - **Multiple interfaces:** Rust types, JSON, Python dictionaries, JavaScript objects, terminal output and MCP tools.
+- **Visual charts:** a celestial mountain landscape, palace details, two-hour navigation, sharing and exports on desktop and mobile.
 
 This guide describes the **0.2.0 API**. Streamable HTTP and the extended date range require **0.2.0+**; check your installed version before using them, or build from source. Rust crates and language packages share the project version. JSON Schema has its own version for data-format compatibility.
 
@@ -38,6 +39,20 @@ Minutes and seconds default to zero, the fixed UTC offset to +480 minutes (UTC+0
 | Browser WASM | `npm install @spensercai/qimen-wasm` | [WebAssembly](bindings/wasm/README.md) |
 
 Prebuilt native packages cover Linux x64 / arm64, macOS x64 / arm64 and Windows x64. See [installation](docs/installation.md) for system requirements and source builds.
+
+### Web charts
+
+`apps/web` is a ready-to-use visual application. Enter a Gregorian date, local time and UTC offset to reveal the Four Pillars and nine-palace chart after a brief compass animation. Select a palace to inspect its plates, stars, doors, deities and optional annotations. Calculations run in the browser through WASM.
+
+Start locally with Node.js 22+:
+
+```bash
+cd apps/web
+npm ci
+npm run dev
+```
+
+Open [localhost:3000](http://localhost:3000). See the [Web guide](apps/web/README.md) for controls and data handling.
 
 ### Rust
 
@@ -147,6 +162,7 @@ Results include the request and conventions, lunar date, Four Pillars, adjacent 
 ```mermaid
 flowchart TB
     subgraph Apps["Applications"]
+        Web["Web"]
         CLI["CLI"]
         MCP["MCP"]
     end
@@ -155,6 +171,7 @@ flowchart TB
         Node["Node.js"]
         WASM["WASM"]
     end
+    Web --> WASM
     CLI --> Core
     MCP --> Core
     Python --> Core

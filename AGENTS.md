@@ -17,6 +17,7 @@
 | `crates/qimen-core` | 定局、九宫、盘式、序列化公共结果 | 依赖 calendar |
 | `apps/qimen-cli` | 命令行参数、中文排盘展示、JSON 输出 | 调用库，不复制算法 |
 | `apps/qimen-mcp` | rmcp 工具、stdio 与 Streamable HTTP 传输 | 调用库，不复制算法 |
+| `apps/web` | Next.js / React 可视化排盘、交互与分享 | 仅调用 npm WASM 绑定，不复制算法 |
 | `bindings/python` | PyO3 + maturin Python 包 | 调用 core |
 | `bindings/node` | napi-rs Node-API 包 | 调用 core |
 | `bindings/wasm` | wasm-bindgen 浏览器 / JS 包 | 调用 core |
@@ -26,6 +27,10 @@
 核心库保持确定性：不读取系统当前时间、环境时区、网络或用户配置文件；调用者显式提供输入。库错误使用类型，CLI / MCP / 语言绑定负责映射。不要在 library 中退出进程或向 stdout 写日志。stdio MCP stdout 仅可输出协议消息；HTTP 入口负责监听、Host / Origin 校验及退出，不在工具实现中重复传输逻辑。
 
 可选注解集中于 `qimen-core::extensions`，由 `ExtensionOptions` 显式启用，默认全关；初始化配置使用 `Calculator`，跨语言请求使用 `CalculationRequest`。历法层不接收奇门扩展配置，应用不复制注解公式。每项结果必须记录规则，不能把古典三奇入墓和阴阳顺逆长生墓混为一谈。基础盘不随注解开关改变；新盘式复用注解前应逐项核验适用条件，规则来源集中在 `docs/extensions.md`。
+
+Web 使用 Next.js App Router、React、Tailwind CSS 与 Motion；保持页面组合、展示组件、状态 hook、输入校验 / 分享及 WASM Worker 的职责分离。`apps/web` 是独立 npm 私有应用，明确排除在 Cargo workspace 之外。WASM 只在 Worker 中初始化，计算异常、加载失败和过期请求需显式处理；不得在组件中补写历法或排盘公式。TypeScript 类型复用绑定契约，所有外部输入先校验。
+
+动效以 transform / opacity 为主，响应 `prefers-reduced-motion` 和用户开关；短暂罗盘动画不能长时间阻塞计算或掩盖错误。交互保留键盘与焦点语义、加载与错误状态，手机不能依赖 hover。日期、盘面与浏览器偏好分离；分享只携带显式请求，导出针对已完成结果。
 
 ## Rust 与接口约束
 
@@ -74,6 +79,21 @@ wasm-pack build bindings/wasm --target web --out-dir pkg --scope spensercai --re
 
 `python scripts/check-schemas.py` 检查结构一致性；生成入口为 `crates/qimen-core/examples/schema.rs`。最低编译器验证以根 `rust-version` 为准。`scripts/compare-calendar.py` 提供跨实现历法差分；lunar-python 与 tyme4rs 同源，不能把差分当作独立天文精度证明。详细测试来源保留在 `tests/fixtures/`，执行日志留在 CI / PR。
 
+Web 的独立门禁在 `apps/web` 执行：
+
+```sh
+npm ci
+npm run format:check
+npm run lint
+npm run typecheck
+npm test
+npm run build
+npx playwright install --with-deps chromium webkit
+npm run test:e2e
+```
+
+ESLint 使用 `--max-warnings=0`，TypeScript 开启严格检查。Vitest 验证输入、分享及状态边界；Playwright 对正式构建验证真实 WASM、桌面 / 移动端交互、减弱动效与失败恢复。测试放独立测试文件；不能用 mock 结果代替真实排盘链路。视觉修改至少检查桌面、窄屏与键盘路径。更新 npm 依赖时提交 `apps/web/package-lock.json`，生产资源由构建脚本从已锁定的 WASM 包准备，不提交生成的二进制。
+
 CI 必须通过 Linux / Windows / macOS 与所有声明的二进制目标。不能把“已写 CI”报告成“CI 已通过”；无法验证时明确列出未运行项与原因。提交前检查 diff，保留其他协作者的修改；并行开发按目录分工，在共享 API 改动前同步接口。
 
 ## 发布与维护
@@ -82,7 +102,7 @@ CI 必须通过 Linux / Windows / macOS 与所有声明的二进制目标。不�
 
 除本文件外，公开 Markdown 面向使用者：安装、API、参数、结果和计算约定；贡献流程、门禁与发布设置集中在本文件。公开文档不记录开发对话、逐次测试结果或审查过程；测试来源和字段转录保存在测试目录，执行结果留在 CI / PR。架构图使用简短或分行标签，箭头明确表示依赖方向；中英文图示保持一致，修改后验证实际渲染。README 代码示例须可直接复制运行，不使用仅在 rustdoc 中隐藏的 `#` 行。
 
-统一版本源为根 `Cargo.toml` 的 `workspace.package.version`。运行 `python scripts/release.py set-version X.Y.Z` 同步本地依赖、Rust 锁文件和 Node manifests；Python / WASM / Rust 包继承项目版本。`python scripts/release.py validate` 是提交前与 CI 的一致性入口。软件包版本和 JSON Schema 版本独立。
+统一版本源为根 `Cargo.toml` 的 `workspace.package.version`。运行 `python scripts/release.py set-version X.Y.Z` 同步本地依赖、Rust 锁文件、Node 与 Web manifests；Python / WASM / Rust 包继承项目版本。Web 必须保持 `private: true`，其已发布 WASM 依赖通过明确升级及锁文件更新，不自动指向尚未发布的版本。`python scripts/release.py validate` 是提交前与 CI 的一致性入口。软件包版本和 JSON Schema 版本独立。
 
 Release 工作流在新版本合入 `main` 后自动运行，也可在 Actions 中对 `main` 手动启动，无需手工打标签。完整质量检查与构建后，工作流创建 `vX.Y.Z` 并继续发布同一提交；已有版本跳过，既有标签不得移动。版本推进与合并可能触发正式发布，因此没有用户发布授权时只完成代码、验证和 PR，不把未授权的新版本合入发布分支。兼容的手工标签也须通过版本和提交来源校验。
 
@@ -96,5 +116,19 @@ Release 工作流在新版本合入 `main` 后自动运行，也可在 Actions �
 开关放 Repository variables；凭证放 Environment secrets 或同名 Repository secrets。Environment 部署规则允许 `main`，若使用手工标签兼容路径也允许 `v*`。未开启的注册表跳过，GitHub Release 使用内置 `GITHUB_TOKEN`。npm token 需覆盖 scope 下主包、五个平台分包及 WASM 包，具有发布权限和 Bypass two-factor authentication；仅组织管理权限不足。令牌不得进入代码、日志或 PR。
 
 注册表发布不是跨渠道事务。失败时先核对原运行和各包实际状态，再通过原运行的 `Re-run failed jobs` 恢复；仅补齐同一提交的原始产物，不移动标签或重编译不同内容覆盖既有版本。napi 发布前必须确认五个平台产物齐全；本地检查 tarball 使用 `npm pack --dry-run --ignore-scripts`，不要让发布 lifecycle 在检查中执行。正式发布完成后确认各注册表版本、安装与实际调用，不能只以 job 成功代替产物可用。
+
+Web 使用独立 `.github/workflows/web.yml`：相关 PR 只运行质量与浏览器检查；相关 `main` 推送在检查成功后部署，也可对 `main` 手动运行。它不打标签、不触发 Rust / npm / PyPI 发布。缺少 Vercel 配置时部署步骤明确跳过并写 Actions 摘要，不能将跳过报告成上线成功。
+
+| Web 配置 | GitHub Actions 位置 | 值来源 |
+| --- | --- | --- |
+| `VERCEL_TOKEN` | Repository secret | 有目标项目部署权限的 Vercel token |
+| `VERCEL_ORG_ID` | Repository variable，或同名 secret | Vercel team / account ID，或本地 `.vercel/project.json` 的 `orgId` |
+| `VERCEL_PROJECT_ID` | Repository variable，或同名 secret | Vercel 项目 ID，或 `.vercel/project.json` 的 `projectId` |
+
+Vercel 项目设置为 **Next.js、Node.js 22.x、Root Directory `apps/web`**，安装命令为 `npm ci`、构建命令为 `npm run build`，其余输出设置使用框架默认。该 Root Directory 是远端 Project Setting，不写入 `vercel.json`。独立工作流从仓库根执行固定版本 CLI 的 `vercel pull`、`vercel build --prod` 与 `vercel deploy --prebuilt --prod`，拉取设置后先核对目录；不能在 `apps/web` 下重复应用同一路径。若同时使用 Vercel Git 集成，应关闭它对该项目的自动部署，避免绕过 Actions 门禁或重复发布；项目配置应由用户授权的部署操作管理。
+
+应用运行不需要业务 API key。ChatGPT 连接 Vercel 仅授予当前连接器相应访问，不会自动在 GitHub 配置部署 token；首次部署须确认实际账号 / 项目可访问。不要将 token、拉取的 `.vercel` 或 `.env` 文件签入仓库。部署后检查正式 URL、WASM 加载和实际排盘，必要时用 Vercel promote / rollback 恢复已验证产物，不在故障期间修改库版本。
+
+Web 使用 Prettier 统一源码与配置格式，运行 `npm run format` 修正。升级 TypeScript / ESLint 时同时核对 Next.js、typescript-eslint 与规则插件的兼容范围，不通过关闭 lint 或忽略 peer dependencies 消除工具链错误。
 
 依赖升级通过 Dependabot / PR，保留锁文件。升级历法库要复核参考盘和交节边界，升级 rmcp 要核实当前稳定版及真实协商行为；协议版本字符串不能代替握手测试。
