@@ -1,5 +1,9 @@
 import { test, expect, openChart } from "./helpers";
 
+// WebKit serializes multiword family names without Chromium's optional quotes.
+const chineseSerifFamily =
+  /^(?:"Noto Serif SC Variable"|Noto Serif SC Variable),/;
+
 test("星垣资源与宋体中文在排盘和指南中正常加载", async ({ page }) => {
   const fontRequests: string[] = [];
   page.on("request", (request) => {
@@ -23,7 +27,7 @@ test("星垣资源与宋体中文在排盘和指南中正常加载", async ({ pa
   ]) {
     await expect(page.locator(selector).first()).toHaveCSS(
       "font-family",
-      /^"Noto Serif SC Variable"/,
+      chineseSerifFamily,
     );
   }
   expect(
@@ -50,7 +54,7 @@ test("星垣资源与宋体中文在排盘和指南中正常加载", async ({ pa
   await page.evaluate(() => document.fonts.ready);
   await expect(page.locator(".guide-surface p").first()).toHaveCSS(
     "font-family",
-    /^"Noto Serif SC Variable"/,
+    chineseSerifFamily,
   );
   await expect(page.locator(".celestial-nebula")).toHaveCSS(
     "background-image",
