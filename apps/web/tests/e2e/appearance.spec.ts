@@ -1,10 +1,10 @@
 import { test, expect, openChart } from "./helpers";
 
 // WebKit serializes multiword family names without Chromium's optional quotes.
-const chineseSerifFamily =
-  /^(?:"Noto Serif SC Variable"|Noto Serif SC Variable),/;
+const readingFamily = /^(?:"LXGW WenKai"|LXGW WenKai),/;
+const displayFamily = /^(?:"Ma Shan Zheng"|Ma Shan Zheng),/;
 
-test("星垣资源与宋体中文在排盘和指南中正常加载", async ({ page }) => {
+test("星垣资源与分层书法字体在排盘和指南中正常加载", async ({ page }) => {
   const fontRequests: string[] = [];
   page.on("request", (request) => {
     if (/\.woff2?(\?|$)/.test(request.url())) fontRequests.push(request.url());
@@ -27,17 +27,31 @@ test("星垣资源与宋体中文在排盘和指南中正常加载", async ({ pa
   ]) {
     await expect(page.locator(selector).first()).toHaveCSS(
       "font-family",
-      chineseSerifFamily,
+      readingFamily,
     );
   }
-  expect(
-    await page.evaluate(() =>
-      document.fonts.check(
-        '450 16px "Noto Serif SC Variable"',
-        "奇门遁甲公历日期",
-      ),
-    ),
-  ).toBe(true);
+  for (const selector of [
+    ".heading-text",
+    ".pillar strong",
+    ".palace-stars",
+    ".palace-door",
+    ".center-emblem",
+    ".detail-header h2",
+    ".detail-door > strong",
+  ]) {
+    await expect(page.locator(selector).first()).toHaveCSS(
+      "font-family",
+      displayFamily,
+    );
+  }
+  // Verify loaded faces, not just a CSS family declaration with silent fallback.
+  const loadedFamilies = await page.evaluate(() =>
+    Array.from(document.fonts)
+      .filter((font) => font.status === "loaded")
+      .map((font) => font.family.replaceAll('"', "")),
+  );
+  expect(loadedFamilies).toContain("LXGW WenKai");
+  expect(loadedFamilies).toContain("Ma Shan Zheng");
   await expect(page.locator(".celestial-backdrop")).toHaveAttribute(
     "aria-hidden",
     "true",
@@ -54,8 +68,11 @@ test("星垣资源与宋体中文在排盘和指南中正常加载", async ({ pa
   await page.evaluate(() => document.fonts.ready);
   await expect(page.locator(".guide-surface p").first()).toHaveCSS(
     "font-family",
-    chineseSerifFamily,
+    readingFamily,
   );
+  await expect(
+    page.getByRole("heading", { name: "使用指南", exact: true }),
+  ).toHaveCSS("font-family", displayFamily);
   await expect(page.locator(".celestial-nebula")).toHaveCSS(
     "background-image",
     /cosmic-void\.webp/,

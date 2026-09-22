@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { CelestialBackdrop } from "@/components/celestial-backdrop";
+import "@fontsource/ma-shan-zheng/400.css";
+import "lxgw-wenkai-webfont/lxgwwenkai-regular.css";
 import "@fontsource-variable/noto-serif-sc";
 import "./globals.css";
 
