@@ -274,10 +274,6 @@ export function QimenWorkspace() {
   return (
     <LazyMotion features={domAnimation} strict>
       <div className={`qimen-app ${reducedMotion ? "quiet-mode" : ""}`}>
-        <div className="landscape-backdrop" aria-hidden="true" />
-        <div className="landscape-vignette" aria-hidden="true" />
-        <div className="ambient-mist mist-one" aria-hidden="true" />
-        <div className="ambient-mist mist-two" aria-hidden="true" />
         <a href="#chart-workspace" className="skip-link">
           跳到排盘结果
         </a>

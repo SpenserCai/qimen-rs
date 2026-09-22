@@ -1,0 +1,79 @@
+/* All routes share a static, non-interactive sky; motion belongs to the compass. */
+.celestial-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  user-select: none;
+  background: var(--ink);
+}
+.celestial-nebula,
+.celestial-veil {
+  position: absolute;
+  inset: 0;
+}
+.celestial-nebula {
+  background: url("/images/cosmic-void.webp") center / cover no-repeat;
+}
+.celestial-veil {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(3, 11, 23, 0.7),
+      rgba(3, 11, 23, 0.06) 25%,
+      rgba(3, 11, 23, 0.08) 68%,
+      rgba(3, 11, 23, 0.88)
+    ),
+    radial-gradient(
+      ellipse at 50% 44%,
+      rgba(7, 19, 38, 0.4),
+      rgba(7, 19, 38, 0.12) 65%,
+      transparent
+    );
+}
+.celestial-orbits {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  color: var(--gold);
+  opacity: 0.55;
+}
+.celestial-orbit {
+  stroke: currentColor;
+  stroke-width: 0.8;
+  opacity: 0.45;
+}
+.celestial-orbit-cool {
+  stroke: #83aabd;
+  opacity: 0.28;
+}
+.celestial-stars {
+  fill: var(--gold-light);
+  stroke: currentColor;
+  stroke-width: 0.7;
+}
+.quiet-mode .celestial-orbits {
+  opacity: 0.3;
+}
+@media (max-width: 760px) {
+  .celestial-nebula {
+    background-position: 55% center;
+  }
+  .celestial-veil {
+    background: linear-gradient(
+      rgba(3, 11, 23, 0.55),
+      rgba(3, 11, 23, 0.3) 40%,
+      rgba(3, 11, 23, 0.75)
+    );
+  }
+  .celestial-orbits {
+    opacity: 0.3;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .celestial-orbits {
+    opacity: 0.3;
+  }
+}
