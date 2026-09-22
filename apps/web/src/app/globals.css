@@ -16,8 +16,8 @@ body {
   min-height: 100dvh;
   margin: 0;
   color: var(--text);
-  font-family: var(--serif);
-  font-weight: 450;
+  font-family: var(--reading-font);
+  font-weight: 400;
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
 }
@@ -147,7 +147,7 @@ p {
   display: grid;
   place-items: center;
   color: var(--gold-light);
-  font: 25px var(--serif);
+  font: 25px var(--display-font);
 }
 .brand-seal::before {
   content: "";
@@ -170,7 +170,7 @@ p {
   );
 }
 .brand-wordmark {
-  font: 500 27px var(--serif);
+  font: 500 27px var(--reading-font);
   letter-spacing: 0.01em;
   color: #f0dfb8;
   display: flex;
@@ -183,7 +183,7 @@ p {
 }
 .brand-wordmark small {
   margin-left: 19px;
-  font: 13px var(--serif);
+  font: 13px var(--reading-font);
   letter-spacing: 0.2em;
   color: var(--gold);
 }
@@ -265,7 +265,7 @@ p {
   gap: 20px;
   padding: 24px 0 22px;
   color: #b7b698;
-  font: 12px var(--serif);
+  font: 12px var(--reading-font);
   letter-spacing: 0.3em;
 }
 .workspace-intro p span {
@@ -348,7 +348,7 @@ p {
 .heading-text {
   display: block;
   margin-top: 7px;
-  font: 600 23px var(--serif);
+  font: 23px var(--display-font);
   letter-spacing: 0.08em;
 }
 .input-form {
@@ -532,7 +532,7 @@ p {
   align-items: center;
   justify-content: center;
   gap: 11px;
-  font: 600 22px var(--serif);
+  font: 600 22px var(--reading-font);
   letter-spacing: 0.12em;
   box-shadow:
     0 0 22px rgba(201, 166, 90, 0.14),
@@ -571,7 +571,7 @@ p {
   gap: 9px;
   width: 100%;
   margin-bottom: 8px;
-  font: 600 17px var(--serif);
+  font: 600 17px var(--reading-font);
   letter-spacing: 0.08em;
 }
 .subsection-title svg {
@@ -739,11 +739,11 @@ p {
   padding: 0 2px;
 }
 .chart-date time {
-  font: 15px var(--serif);
+  font: 15px var(--reading-font);
   letter-spacing: 0.04em;
 }
 .chart-date > span {
-  font: 13px var(--serif);
+  font: 13px var(--reading-font);
   color: var(--muted);
   letter-spacing: 0.1em;
   text-align: right;
@@ -764,13 +764,13 @@ p {
 .pillar > span {
   display: block;
   color: var(--muted);
-  font: 11px var(--serif);
+  font: 11px var(--reading-font);
   margin-bottom: 1px;
   letter-spacing: 0.18em;
 }
 .pillar strong {
   color: #f0e3be;
-  font: 500 clamp(27px, 2.6vw, 38px) var(--serif);
+  font: clamp(27px, 2.6vw, 38px) var(--display-font);
   letter-spacing: 0.08em;
 }
 .pillar .day-pillar {
@@ -786,7 +786,7 @@ p {
   border: 1px solid var(--gold-line);
   border-radius: 3px;
   background: var(--surface);
-  font: 12px var(--serif);
+  font: 12px var(--reading-font);
 }
 .chart-facts > * {
   padding: 0 10px;
@@ -829,7 +829,7 @@ p {
 }
 .summary-placeholder h2 {
   margin: 14px 0 10px;
-  font: 500 27px var(--serif);
+  font: 27px var(--display-font);
   color: var(--gold-light);
 }
 .summary-placeholder p {
@@ -865,7 +865,7 @@ p {
 .compass-rings text {
   fill: #bca66e;
   stroke: none;
-  font: 10px var(--serif);
+  font: 10px var(--reading-font);
   opacity: 0.72;
 }
 .compass-rings .ring-jewel {
@@ -945,7 +945,7 @@ button.palace-cell:hover {
   box-shadow: 0 0 11px 3px #d3aa58;
 }
 .palace-top {
-  font: 10px var(--serif);
+  font: 10px var(--reading-font);
   color: var(--muted);
   display: flex;
   justify-content: space-between;
@@ -976,11 +976,11 @@ button.palace-cell:hover {
   place-items: center;
 }
 .day-horse-marker {
-  font: 8px var(--serif);
+  font: 8px var(--reading-font);
   color: var(--jade);
 }
 .palace-deity {
-  font: 14px var(--serif);
+  font: 14px var(--reading-font);
   line-height: 1.6;
   letter-spacing: 0.07em;
   margin-top: 0;
@@ -999,7 +999,7 @@ button.palace-cell:hover {
   min-width: 0;
 }
 .palace-stars {
-  font: 500 clamp(16px, 1.65vw, 24px) var(--serif);
+  font: clamp(16px, 1.65vw, 24px) var(--display-font);
   letter-spacing: 0.01em;
   white-space: nowrap;
 }
@@ -1018,7 +1018,7 @@ button.palace-cell:hover {
   color: #d6c6a0;
 }
 .palace-door {
-  font: 500 clamp(19px, 1.85vw, 27px) var(--serif);
+  font: clamp(19px, 1.85vw, 27px) var(--display-font);
   color: #dfad86;
   letter-spacing: 0.05em;
   line-height: 1.3;
@@ -1032,7 +1032,7 @@ button.palace-cell:hover {
   align-items: flex-end;
   gap: 2px;
   margin-bottom: 2px;
-  font: 15px var(--serif);
+  font: 15px var(--reading-font);
 }
 .palace-stems > span {
   display: flex;
@@ -1040,7 +1040,7 @@ button.palace-cell:hover {
   gap: 4px;
 }
 .palace-stems small {
-  font: 8px var(--serif);
+  font: 8px var(--reading-font);
   color: var(--muted);
 }
 .hosted-stem {
@@ -1048,7 +1048,7 @@ button.palace-cell:hover {
   font-size: 11px;
 }
 .hosted-stem sup {
-  font: 6px var(--serif);
+  font: 6px var(--reading-font);
   margin-left: 1px;
   vertical-align: super;
 }
@@ -1073,7 +1073,7 @@ button.palace-cell:hover {
   position: relative;
 }
 .center-emblem {
-  font: 500 27px var(--serif);
+  font: 27px var(--display-font);
   color: var(--gold-light);
   line-height: 1;
 }
@@ -1090,17 +1090,17 @@ button.palace-cell:hover {
     0 0 0 7px rgba(95, 164, 132, 0.07);
 }
 .center-content strong {
-  font: 500 22px var(--serif);
+  font: 22px var(--display-font);
 }
 .center-content > span:last-child {
-  font: 9px var(--serif);
+  font: 9px var(--reading-font);
   color: var(--muted);
   letter-spacing: 0.1em;
 }
 .chart-axis {
   position: absolute;
   color: #ddc68e;
-  font: 14px var(--serif);
+  font: 14px var(--reading-font);
   pointer-events: none;
   text-shadow: 0 0 10px var(--ink);
 }
@@ -1141,7 +1141,7 @@ button.palace-cell:hover {
   align-items: center;
   gap: 9px;
   padding: 13px 20px;
-  font: 14px var(--serif);
+  font: 14px var(--reading-font);
   color: var(--gold-light);
 }
 .casting-dot {
@@ -1152,7 +1152,7 @@ button.palace-cell:hover {
 }
 .skeleton-palace {
   color: var(--faint);
-  font: 10px var(--serif);
+  font: 10px var(--reading-font);
   gap: 15px;
 }
 .skeleton-line {
@@ -1179,13 +1179,13 @@ button.palace-cell:hover {
 .time-navigation > span {
   text-align: center;
   color: #e2dec4;
-  font: 14px var(--serif);
+  font: 14px var(--reading-font);
 }
 .time-navigation small {
   display: block;
   margin-top: 4px;
   color: var(--muted);
-  font: 9px var(--serif);
+  font: 9px var(--reading-font);
 }
 .void-horse-strip {
   display: flex;
@@ -1268,7 +1268,7 @@ button.palace-cell:hover {
 }
 .detail-header h2 {
   margin-top: 7px;
-  font: 600 26px var(--serif);
+  font: 26px var(--display-font);
   letter-spacing: 0.1em;
   color: #ecdfb4;
 }
@@ -1297,7 +1297,7 @@ button.palace-cell:hover {
 }
 .detail-door > strong {
   color: var(--gold-light);
-  font: 500 45px var(--serif);
+  font: 45px var(--display-font);
   letter-spacing: 0.06em;
   text-shadow: 0 0 20px rgba(221, 180, 95, 0.2);
 }
@@ -1311,7 +1311,7 @@ button.palace-cell:hover {
   outline: 1px solid rgba(214, 185, 121, 0.35);
   outline-offset: 3px;
   padding: 3px 6px;
-  font: 14px var(--serif);
+  font: 14px var(--reading-font);
   color: var(--gold-light);
   white-space: nowrap;
 }
@@ -1369,7 +1369,7 @@ button.palace-cell:hover {
   line-height: 1.9;
 }
 .detail-row dd {
-  font: 17px var(--serif);
+  font: 17px var(--reading-font);
   text-align: right;
   line-height: 1.5;
   color: #e2e5d2;
@@ -1377,7 +1377,7 @@ button.palace-cell:hover {
 }
 .detail-row dd small {
   display: block;
-  font: 9px var(--serif);
+  font: 9px var(--reading-font);
   line-height: 1.9;
   color: var(--muted);
 }
@@ -1402,7 +1402,7 @@ button.palace-cell:hover {
 .conventions-block p {
   display: flex;
   justify-content: space-between;
-  font: 11px var(--serif);
+  font: 11px var(--reading-font);
   line-height: 2.1;
   color: var(--muted);
 }
@@ -1443,7 +1443,7 @@ button.palace-cell:hover {
   color: var(--muted);
   text-align: center;
   letter-spacing: 0.1em;
-  font: 9px var(--serif);
+  font: 9px var(--reading-font);
 }
 .detail-footer span {
   color: var(--gold);
@@ -1464,7 +1464,7 @@ button.palace-cell:hover {
   opacity: 0.65;
 }
 .detail-empty h2 {
-  font: 25px var(--serif);
+  font: 25px var(--display-font);
   letter-spacing: 0.15em;
   color: var(--gold-light);
 }
@@ -1474,7 +1474,7 @@ button.palace-cell:hover {
   line-height: 2;
 }
 .detail-empty > span {
-  font: 10px var(--serif);
+  font: 10px var(--reading-font);
   margin-top: 40px;
   color: var(--muted);
 }
@@ -1552,7 +1552,7 @@ button.palace-cell:hover {
   margin-top: 14px;
   border-top: 1px solid rgba(198, 166, 108, 0.2);
   color: var(--muted);
-  font: 11px var(--serif);
+  font: 11px var(--reading-font);
   letter-spacing: 0.13em;
 }
 .footer-dot {
@@ -1587,6 +1587,8 @@ button.palace-cell:hover {
   line-height: 1.9;
 }
 .recovery-page h1 {
+  font-family: var(--display-font);
+  font-weight: 400;
   font-size: clamp(24px, 5vw, 34px);
   color: var(--gold-light);
 }
