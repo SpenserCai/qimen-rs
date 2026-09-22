@@ -2,6 +2,7 @@
 
 import { m } from "motion/react";
 import type { Chart, Palace, PalaceNumber } from "@spensercai/qimen-wasm";
+import { CelestialOrbits } from "./celestial-orbits";
 import {
   BRANCH_LABELS,
   DEITY_LABELS,
@@ -251,6 +252,7 @@ export function ChartBoard({
       className={`chart-stage ${casting ? "casting" : ""}`}
       aria-busy={casting}
     >
+      <CelestialOrbits />
       <div className="chart-face">
         <CompassRings
           casting={casting}

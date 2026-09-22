@@ -19,7 +19,7 @@ Calculations work offline. Rust, Python, Node.js, WebAssembly, Web, CLI and MCP 
 - **Complete base charts:** Dun, Yuan, Ju, xun head, duty star and door, nine palaces, voids and the hour horse.
 - **Optional annotations:** hidden stems, strength, twelve growth stages, six-instrument punishment, tombs, the day horse and door pressure.
 - **Multiple interfaces:** Rust types, JSON, Python dictionaries, JavaScript objects, terminal output and MCP tools.
-- **Visual charts:** a celestial mountain landscape, palace details, two-hour navigation, sharing and exports on desktop and mobile.
+- **Visual charts:** a celestial deep-space setting with Chinese Song-style typography, palace details, two-hour navigation, sharing and exports on desktop and mobile.
 
 This guide describes the **0.2.0 API**. Streamable HTTP and the extended date range require **0.2.0+**; check your installed version before using them, or build from source. Rust crates and language packages share the project version. JSON Schema has its own version for data-format compatibility.
 

@@ -1,0 +1,33 @@
+@theme inline {
+  --color-background: var(--ink);
+  --color-foreground: var(--text);
+  --color-muted: var(--muted);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-gold-line: var(--gold-line);
+  --color-jade: var(--jade);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+  --font-sans: var(--serif);
+  --font-serif: var(--serif);
+}
+
+:root {
+  color-scheme: dark;
+  --ink: #050d19;
+  --panel: linear-gradient(145deg, #0d1c2c, #081421);
+  --surface: #0a1b2a;
+  --surface-raised: #112439;
+  --surface-hover: #213647;
+  --field: #071322;
+  --control-line: #526c7e;
+  --gold: #d5b779;
+  --gold-light: #f3dca0;
+  --gold-line: rgba(197, 169, 106, 0.4);
+  --jade: #8ccac0;
+  --text: #ecebdc;
+  --muted: #afbfcb;
+  --faint: #96aaba;
+  --line: rgba(155, 181, 202, 0.23);
+  --serif: "Noto Serif SC Variable", "Songti SC", "STSong", serif;
+}

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { CelestialBackdrop } from "@/components/celestial-backdrop";
 import "@fontsource-variable/noto-serif-sc";
 import "./globals.css";
 
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#071518",
+  themeColor: "#050d19",
   colorScheme: "dark",
 };
 
@@ -21,6 +22,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body>
+        <CelestialBackdrop />
         <a className="skip-link" href="#main-content">
           跳转到主要内容
         </a>
