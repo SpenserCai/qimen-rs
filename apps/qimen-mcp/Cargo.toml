@@ -10,8 +10,8 @@ repository.workspace = true
 [dependencies]
 axum = { version = "0.8", default-features = false, features = ["http1", "tokio"] }
 clap.workspace = true
-qimen-calendar = { path = "../../crates/qimen-calendar", version = "0.2.0", features = ["schema"] }
-qimen-core = { path = "../../crates/qimen-core", version = "0.2.0", features = ["schema"] }
+qimen-calendar = { path = "../../crates/qimen-calendar", version = "0.2.1", features = ["schema"] }
+qimen-core = { path = "../../crates/qimen-core", version = "0.2.1", features = ["schema"] }
 rmcp = { workspace = true, features = ["transport-streamable-http-server"] }
 serde.workspace = true
 serde_json.workspace = true
