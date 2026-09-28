@@ -1,6 +1,6 @@
 # 奇门天盘 · Web
 
-[项目首页](../../README.md) · [计算约定](../../docs/algorithm-sources.md) · [扩展注记](../../docs/extensions.md)
+[项目首页](../../README.md) · [计算约定](../../docs/algorithm-sources.md) · [扩展注记](../../docs/extensions.md) · [在线接入指南](https://qimen-rs.vercel.app/developers) · [时间与排盘约定](https://qimen-rs.vercel.app/guide/conventions)
 
 面向桌面与手机的奇门排盘应用。以星垣深空、古金罗盘与书法中文呈现九宫，输入公历时间即可查看八字、局数和完整盘面；排盘在浏览器中计算，无需登录。
 

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { SITE_URL, SITE_DESCRIPTION } from "@/lib/site/metadata";
 import { CelestialBackdrop } from "@/components/celestial-backdrop";
 import "@fontsource/ma-shan-zheng/400.css";
 import "lxgw-wenkai-webfont/lxgwwenkai-regular.css";
@@ -6,11 +7,12 @@ import "@fontsource-variable/noto-serif-sc";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "qimen-rs · 奇门遁甲", template: "%s · qimen-rs" },
-  description:
-    "八字与时家拆补转盘。输入公历时间，即刻呈现九宫、星门神与可选注记。计算在浏览器内完成。",
+  metadataBase: new URL(SITE_URL),
+  title: { default: "奇门遁甲在线排盘 · qimen-rs", template: "%s · qimen-rs" },
+  description: SITE_DESCRIPTION,
   applicationName: "qimen-rs",
   icons: { icon: "/icon.svg" },
+  robots: { index: process.env.VERCEL_ENV !== "preview", follow: true },
 };
 
 export const viewport: Viewport = {

@@ -1,5 +1,7 @@
 # qimen-rs
 
+[Online guide](https://qimen-rs.vercel.app/guide) · [Developer integration](https://qimen-rs.vercel.app/developers) · [Calculation conventions](https://qimen-rs.vercel.app/guide/conventions)
+
 [![crates.io](https://img.shields.io/crates/v/qimen-core?logo=rust&label=crates.io)](https://crates.io/crates/qimen-core)
 [![PyPI](https://img.shields.io/pypi/v/qimen-rs?logo=python&label=PyPI)](https://pypi.org/project/qimen-rs/)
 [![npm Node.js](https://img.shields.io/npm/v/%40spensercai%2Fqimen-rs?logo=npm&label=Node.js)](https://www.npmjs.com/package/@spensercai/qimen-rs)

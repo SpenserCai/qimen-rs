@@ -1,11 +1,12 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/site/metadata";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, Compass } from "lucide-react";
 
-export const metadata: Metadata = {
-  title: "使用指南",
-  description: "了解公历输入、时区、换日约定、九宫阅读、可选标注与排盘分享。",
-};
+export const metadata = pageMetadata(
+  "/guide",
+  "使用指南",
+  "了解公历输入、时区、换日约定、九宫阅读、可选标注与排盘分享。",
+);
 
 const annotations = [
   ["暗干", "值使门起时干，采用中宫回退约定。"],
@@ -161,6 +162,15 @@ export default function GuidePage() {
             </a>
           </section>
         </main>
+        <nav
+          aria-label="更多文档"
+          className="mb-6 flex flex-wrap gap-5 text-sm text-gold"
+        >
+          <Link href="/guide/conventions">时间与排盘约定</Link>
+          <Link href="/guide/extensions">扩展参数表</Link>
+          <Link href="/developers">开发者接入</Link>
+          <Link href="/about">关于项目</Link>
+        </nav>
         <footer className="border-t border-gold-line pt-6 text-xs text-muted">
           qimen-rs · 奇门遁甲
         </footer>
