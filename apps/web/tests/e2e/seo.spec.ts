@@ -24,13 +24,15 @@ test("SEO 页面无需 JavaScript 即可读取正文与独立规范链接", asyn
       const response = await page.goto(new URL(path, baseURL).href);
       expect(response?.status()).toBe(200);
       await expect(page).toHaveTitle(`${title} · qimen-rs`);
+      // Next.js serializes the root metadata URL without a trailing slash.
+      const canonical = path === "/" ? origin : `${origin}${path}`;
       await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
         "href",
-        `${origin}${path}`,
+        canonical,
       );
       await expect(page.locator('meta[property="og:url"]')).toHaveAttribute(
         "content",
-        `${origin}${path}`,
+        canonical,
       );
       await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
         "content",
@@ -57,7 +59,7 @@ test("SEO 页面无需 JavaScript 即可读取正文与独立规范链接", asyn
     await page.goto(new URL("/?utm_source=regression", baseURL).href);
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
       "href",
-      `${origin}/`,
+      origin,
     );
     const graph = JSON.parse(
       await page.locator('script[type="application/ld+json"]').innerText(),

@@ -22,7 +22,7 @@ export function pageMetadata(
   const url = new URL(path, SITE_URL).href;
   const fullTitle = `${title} · qimen-rs`;
   return {
-    title,
+    title: { absolute: fullTitle },
     description,
     alternates: { canonical: url },
     openGraph: {
