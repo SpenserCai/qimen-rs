@@ -2750,3 +2750,42 @@ button.palace-cell:hover {
     transition-duration: 0.01ms !important;
   }
 }
+
+.document-content h2 {
+  margin-bottom: 1rem;
+  color: var(--gold-light);
+  font: 24px var(--display-font);
+}
+.document-content p + p {
+  margin-top: 1rem;
+}
+.document-content a {
+  color: var(--gold);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.document-content pre {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  background: var(--field);
+  font-size: 13px;
+  line-height: 1.8;
+}
+.document-content table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.document-content th,
+.document-content td {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+.document-content td:last-child {
+  min-width: 240px;
+}
