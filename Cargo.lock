@@ -991,7 +991,7 @@ dependencies = [
 
 [[package]]
 name = "qimen-calendar"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "schemars",
  "serde",
@@ -1002,7 +1002,7 @@ dependencies = [
 
 [[package]]
 name = "qimen-cli"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "clap",
  "qimen-calendar",
@@ -1013,7 +1013,7 @@ dependencies = [
 
 [[package]]
 name = "qimen-core"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "qimen-calendar",
  "schemars",
@@ -1024,7 +1024,7 @@ dependencies = [
 
 [[package]]
 name = "qimen-mcp"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum",
  "clap",
@@ -1040,7 +1040,7 @@ dependencies = [
 
 [[package]]
 name = "qimen-node"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "napi",
  "napi-build",
@@ -1050,7 +1050,7 @@ dependencies = [
 
 [[package]]
 name = "qimen-python"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "pyo3",
  "qimen-core",
@@ -1058,7 +1058,7 @@ dependencies = [
 
 [[package]]
 name = "qimen-wasm"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "qimen-core",
  "serde",

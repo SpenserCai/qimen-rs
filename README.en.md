@@ -23,7 +23,7 @@ Calculations work offline. Rust, Python, Node.js, WebAssembly, Web, CLI and MCP 
 - **Multiple interfaces:** Rust types, JSON, Python dictionaries, JavaScript objects, terminal output and MCP tools.
 - **Visual charts:** a celestial deep-space setting with Ma Shan Zheng calligraphy and LXGW WenKai reading text, palace details, two-hour navigation, sharing and exports on desktop and mobile.
 
-This guide describes the **0.2.0 API**. Streamable HTTP and the extended date range require **0.2.0+**; check your installed version before using them, or build from source. Rust crates and language packages share the project version. JSON Schema has its own version for data-format compatibility.
+This guide describes the **0.2.1 API**. Streamable HTTP and the extended date range require **0.2.0+**; check your installed version before using them, or build from source. Rust crates and language packages share the project version. JSON Schema has its own version for data-format compatibility.
 
 ## Installation and quick start
 
